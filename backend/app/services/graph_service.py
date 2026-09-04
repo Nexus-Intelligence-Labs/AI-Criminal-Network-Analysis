@@ -1,7 +1,5 @@
 from app.db.neo4j import get_neo4j_driver
 from graph.services.graph_query_service import GraphQueryService
-
-
 class GraphService:
     """
     Service layer for graph operations.

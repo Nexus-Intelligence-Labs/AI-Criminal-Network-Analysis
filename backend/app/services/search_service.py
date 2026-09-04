@@ -3,3 +3,5 @@ class SearchService:
 
     def search(self, query: str) -> None:
         raise NotImplementedError
+
+

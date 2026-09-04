@@ -3,3 +3,5 @@ class AnalyticsService:
 
     def summarize(self) -> None:
         raise NotImplementedError
+
+

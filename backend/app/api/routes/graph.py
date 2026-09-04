@@ -7,8 +7,6 @@ from app.services.graph_service import GraphService
 router = APIRouter()
 
 graph_service = GraphService()
-
-
 @router.get("/{case_id}")
 def get_graph(case_id: str, current_user: User = Depends(get_current_user)):
     """

@@ -3,3 +3,5 @@ class AlertService:
 
     def list_alerts(self) -> None:
         raise NotImplementedError
+
+

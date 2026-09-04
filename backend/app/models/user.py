@@ -20,3 +20,5 @@ class User(Base):
     # the ~95-130 character Argon2 PHC string produced by pwdlib.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
