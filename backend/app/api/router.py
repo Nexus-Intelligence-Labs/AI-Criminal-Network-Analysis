@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     alerts,
     analytics,
+    auth,
     cases,
     entities,
     evidence,
@@ -15,6 +16,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(health.router)
+api_router.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 api_router.include_router(entities.router, prefix="/api/entities", tags=["entities"])
 api_router.include_router(relationships.router, prefix="/api/relationships", tags=["relationships"])
 api_router.include_router(graph.router, prefix="/api/graph", tags=["graph"])
