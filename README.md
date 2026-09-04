@@ -566,6 +566,10 @@ The frontend provides the investigator-facing experience, including:
 - alerts
 - analytics
 
+### Frontend current status
+
+Frontend development has started. The authentication UI (login flow, auth context, protected-route handling) is the latest merged work. The investigator dashboard, entity search, graph visualization, case workflows, timeline views, and alert interface are still in development.
+
 ---
 
 ## Backend
@@ -704,6 +708,16 @@ AI-Criminal-Network-Analysis/
 │   └── decisions/
 │
 ├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── lib/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── types/
+│   ├── README.md
+│   └── package.json
 │
 ├── graph/
 │   ├── analytics/
@@ -839,22 +853,31 @@ Security functionality will be integrated into this existing backend rather than
 
 # Security Architecture
 
-Security is being developed as a dedicated cross-cutting concern.
+Security is being developed as a dedicated cross-cutting concern and now has a working foundation in the backend.
 
-Planned capabilities include:
+## Implemented
 
 - password hashing
-- authentication
-- JWT authentication
-- JWT verification
+- credential-based authentication
+- JWT authentication (issuance and verification)
 - current-user dependency
-- role-based access control
-- API authorization
+- protected API routes
+- role-based authorization foundation
+- centralized audit logging
+- login success / failure auditing
+- authentication failure auditing
+- authorization-denied auditing
+- JWT algorithm allowlist
+- JWT expiration bounds validation
+- JWT secret validation
+- safe, generic authentication error responses (to avoid leaking details to attackers)
+
+## Still In Development
+
+- broader role-based access control (RBAC) policies across all endpoints
 - security middleware
-- audit logging
-- secret management
-- security hardening
-- security testing
+- expanded secret management
+- additional hardening as new endpoints are added
 
 Password hashing uses:
 
@@ -881,34 +904,34 @@ The `.env` file is intentionally excluded from version control.
 Security is intentionally implemented incrementally:
 
 ```text
-Password Hashing
+Password Hashing                    [done]
         │
         ▼
-User Security Fields
+User Security Fields                [done]
         │
         ▼
-Authentication / Login
+Authentication / Login              [done]
         │
         ▼
-JWT Creation + Verification
+JWT Creation + Verification         [done]
         │
         ▼
-Current User Dependency
+Current User Dependency             [done]
         │
         ▼
-RBAC
+RBAC Foundation                     [done]
         │
         ▼
-Protected Endpoints
+Protected Endpoints                 [done]
         │
         ▼
-Audit Logging
+Audit Logging                       [done]
         │
         ▼
-Security Hardening
+Security Hardening                  [done]
         │
         ▼
-Security Testing
+Security Testing                    [ongoing, 143 tests passing]
 ```
 
 ---
@@ -1082,7 +1105,9 @@ FastAPI's interactive API documentation can be used to inspect the available rou
 
 Backend tests use pytest.
 
-Run the complete backend test suite:
+The backend currently has **143 passing tests**, covering health checks, user models, authentication, dependencies, protected routes, authorization, audit logging, and security hardening.
+
+Run the complete backend test suite from `backend/`:
 
 ```bash
 pytest
@@ -1092,6 +1117,12 @@ Run a specific test:
 
 ```bash
 pytest tests/test_health.py
+```
+
+The AI/NLP layer also has an initial test suite (`ai/tests/test_ner.py`) covering the entity-extraction implementation. Run it from `ai/`:
+
+```bash
+pytest tests/test_ner.py
 ```
 
 Tests should be added alongside new functionality.
@@ -1414,6 +1445,8 @@ Demonstration / Deployment
 
 > This section should be updated as features are completed.
 
+The GitHub repository is active, and `main` is clean and up to date.
+
 ## Infrastructure
 
 - [x] GitHub organization
@@ -1435,24 +1468,28 @@ Demonstration / Deployment
 - [x] Initial database models
 - [x] Initial schemas
 - [x] Initial service layer
+- [x] 143 passing backend tests
 
 ## Security
 
 - [x] Security dependency foundation
-- [ ] Password hashing integration
-- [ ] User authentication
-- [ ] JWT authentication
-- [ ] Current-user dependency
-- [ ] RBAC
-- [ ] Protected API endpoints
-- [ ] Audit logging integration
-- [ ] Security hardening
-- [ ] Security test suite
+- [x] Password hashing integration
+- [x] User authentication
+- [x] JWT authentication
+- [x] Current-user dependency
+- [x] Protected API endpoints
+- [x] Role-based authorization foundation
+- [x] Centralized audit logging (login success/failure, authentication failure, authorization-denied)
+- [x] Security hardening (JWT algorithm allowlist, JWT expiration bounds, JWT secret validation, safe generic auth errors)
+- [x] Security test suite
+- [ ] Full RBAC policy coverage across all endpoints
+- [ ] Security middleware
 
 ## AI / NLP
 
+- [x] Initial NER / entity extraction implementation with pattern support
+- [x] Initial AI test suite
 - [ ] Data ingestion pipeline
-- [ ] Entity extraction
 - [ ] Relationship extraction
 - [ ] Entity resolution
 - [ ] Embedding pipeline
@@ -1460,22 +1497,47 @@ Demonstration / Deployment
 
 ## Graph
 
+- [x] Neo4j graph loader
+- [x] Graph query service
+- [x] Entity/relationship creation queries
+- [x] Case graph query
+- [x] Neighbors query
+- [x] Shortest-path query
+- [x] Centrality analytics
+- [x] Community detection
 - [ ] Final graph ontology
-- [ ] Graph loaders
 - [ ] Production graph construction
-- [ ] Graph analytics
 - [ ] Advanced investigation queries
 - [ ] Anomaly detection
 
 ## Frontend
 
+- [x] Frontend project scaffolding (React + Vite + TypeScript)
+- [x] Authentication UI (latest merged work)
 - [ ] Investigator dashboard
-- [ ] Authentication UI
 - [ ] Entity search
 - [ ] Graph visualization
 - [ ] Case workflows
 - [ ] Timeline views
 - [ ] Alert interface
+
+## Data
+
+- [x] Data directories established for CDR, criminal history, financial, FIR,
+      intelligence reports, organizations, social, surveillance, and vehicles
+- [ ] Real dataset population
+- [ ] Data ingestion and normalization pipelines
+
+## Still In Development
+
+- Entity resolution
+- Relationship extraction
+- Broader AI/NLP pipelines
+- Real dataset population
+- Full frontend dashboards
+- Complete end-to-end integration between AI, graph, backend, and frontend
+
+The project is under active development. It is not production-ready, the frontend is not complete, and the AI/data pipeline is not complete.
 
 ---
 
@@ -1497,6 +1559,7 @@ Component-specific documentation is available in:
 ai/README.md
 backend/README.md
 graph/README.md
+frontend/README.md
 ```
 
 ---
@@ -1513,6 +1576,10 @@ A project license has not yet been selected.
 
 This repository represents an actively evolving Smart India Hackathon project.
 
-The architecture, graph ontology, AI pipelines, APIs, security controls, and investigator interface are being developed incrementally.
+The GitHub repository is active, and `main` is clean and synced with the latest merged work (frontend authentication UI).
+
+Backend foundations, authentication, security hardening, graph services, and an initial AI/NLP entity-extraction implementation are in place, with 143 backend tests passing. The frontend, broader AI pipelines, entity resolution, relationship extraction, real dataset population, and full end-to-end integration are still in development.
+
+This project is **not** production-ready. It is a work in progress being developed incrementally.
 
 ---
