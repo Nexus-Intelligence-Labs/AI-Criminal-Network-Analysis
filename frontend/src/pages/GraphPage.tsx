@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ConnectionExplanation } from '@/components/investigation/InvestigationPanels'
 import { 
   ZoomIn, ZoomOut, Maximize2, RotateCcw, Filter, 
   Search as SearchIcon, Network as NetworkIcon, X,
@@ -29,6 +30,7 @@ const layouts = [
 ]
 
 const entityTypes: EntityType[] = ['person', 'organization', 'vehicle', 'location', 'phone', 'account']
+const relationshipTypes = ['knows', 'works_with', 'owns', 'located_at', 'contacted', 'transacted_with', 'associated_with']
 
 export function GraphPage() {
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null)
@@ -37,6 +39,11 @@ export function GraphPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showLegend, setShowLegend] = useState(true)
   const [entityTypeFilters, setEntityTypeFilters] = useState<EntityType[]>([])
+  const [relationshipFilters, setRelationshipFilters] = useState<string[]>([])
+  const [hopDepth, setHopDepth] = useState('1')
+  const [graphMode, setGraphMode] = useState('standard')
+  const [timelineMonth, setTimelineMonth] = useState(3)
+  const [connectionOpen, setConnectionOpen] = useState(false)
 
   const handleNodeClick = (entity: Entity) => {
     setSelectedEntity(entity)
@@ -51,6 +58,7 @@ export function GraphPage() {
       const sourceNode = mockGraphData.nodes.find(n => n.id === edge.source)
       const targetNode = mockGraphData.nodes.find(n => n.id === edge.target)
       return sourceNode && targetNode &&
+        (relationshipFilters.length === 0 || relationshipFilters.includes(edge.type)) &&
         (entityTypeFilters.length === 0 || 
          (entityTypeFilters.includes(sourceNode.type) && entityTypeFilters.includes(targetNode.type)))
     }),
@@ -96,6 +104,11 @@ export function GraphPage() {
 
   const clearFilters = () => {
     setEntityTypeFilters([])
+    setRelationshipFilters([])
+  }
+
+  const toggleRelationshipFilter = (type: string) => {
+    setRelationshipFilters((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type])
   }
 
   const handleFocusSelected = () => {
@@ -184,12 +197,16 @@ export function GraphPage() {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <h4 className="font-medium mb-2">Relationship Types</h4>
+                  <div className="space-y-2">{relationshipTypes.map((type) => <div key={type} className="flex items-center gap-2"><Checkbox id={`relationship-${type}`} checked={relationshipFilters.includes(type)} onCheckedChange={() => toggleRelationshipFilter(type)} /><label htmlFor={`relationship-${type}`} className="cursor-pointer text-sm">{type.replace('_', ' ')}</label></div>)}</div>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
 
           {/* Active Filters */}
-          {entityTypeFilters.length > 0 && (
+          {(entityTypeFilters.length > 0 || relationshipFilters.length > 0) && (
             <>
               {entityTypeFilters.map((type) => (
                 <Badge key={type} variant="secondary" className="capitalize">
@@ -202,6 +219,7 @@ export function GraphPage() {
                   </button>
                 </Badge>
               ))}
+              {relationshipFilters.map((type) => <Badge key={type} variant="secondary">{type.replace('_', ' ')}<button onClick={() => toggleRelationshipFilter(type)} className="ml-2 hover:text-destructive">×</button></Badge>)}
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 <X className="h-4 w-4 mr-2" />
                 Clear All
@@ -216,11 +234,26 @@ export function GraphPage() {
             <Focus className="h-4 w-4 mr-2" />
             Focus Selected
           </Button>
+          <Select value={hopDepth} onValueChange={setHopDepth}>
+            <SelectTrigger className="w-28"><SelectValue placeholder="Hops" /></SelectTrigger>
+            <SelectContent>{['1', '2', '3', '4'].map((hop) => <SelectItem key={hop} value={hop}>{hop} hop{hop === '1' ? '' : 's'}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={graphMode} onValueChange={setGraphMode}>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Mode" /></SelectTrigger>
+            <SelectContent>{['standard', 'community', 'centrality', 'evidence', 'timeline'].map((mode) => <SelectItem key={mode} value={mode} className="capitalize">{mode}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={() => setConnectionOpen(true)} disabled={!selectedNodeId}>Explain connection</Button>
           <Button variant="outline" size="sm" onClick={() => setShowLegend(!showLegend)}>
             <LayoutGrid className="h-4 w-4 mr-2" />
             Legend
           </Button>
         </div>
+      </div>
+      <div className="graph-timebar border-b border-border bg-card px-6 py-2">
+        <span className="text-xs text-muted-foreground">Temporal view</span>
+        <input aria-label="Timeline month" type="range" min="1" max="9" value={timelineMonth} onChange={(event) => setTimelineMonth(Number(event.target.value))} />
+        <span className="font-mono text-xs text-cyan-400">2026 / {String(timelineMonth).padStart(2, '0')}</span>
+        <Badge variant="outline">Mock snapshot</Badge>
       </div>
 
       {/* Main Content */}
@@ -321,6 +354,7 @@ export function GraphPage() {
         open={isEntitySheetOpen}
         onOpenChange={setIsEntitySheetOpen}
       />
+      <ConnectionExplanation open={connectionOpen} onOpenChange={setConnectionOpen} />
     </div>
   )
 }

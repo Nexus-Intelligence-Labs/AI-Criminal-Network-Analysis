@@ -18,6 +18,10 @@ import { GraphPage } from './pages/GraphPage'
 import { Search } from './pages/Search'
 import { Settings } from './pages/Settings'
 import { Timeline } from './pages/Timeline'
+import { Investigations } from './pages/Investigations'
+import { ReviewQueues } from './pages/ReviewQueues'
+import { SavedQueries } from './pages/SavedQueries'
+import { AlertRules } from './pages/AlertRules'
 import './styles.css'
 import './dashboard.css'
 
@@ -46,6 +50,10 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/investigations" element={<Investigations />} />
+                <Route path="/reviews" element={<ReviewQueues />} />
+                <Route path="/saved-queries" element={<SavedQueries />} />
+                <Route path="/alert-rules" element={<AlertRules />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
