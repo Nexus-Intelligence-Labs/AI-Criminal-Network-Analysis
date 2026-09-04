@@ -31,3 +31,4 @@ def get_shortest_path(source: str, target: str, current_user: User = Depends(get
     Return the shortest path between two entities.
     """
     return graph_service.get_shortest_path(source, target)
+

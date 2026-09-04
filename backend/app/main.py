@@ -9,3 +9,4 @@ configure_logging()
 
 app = FastAPI(title=settings.app_name)
 app.include_router(api_router)
+

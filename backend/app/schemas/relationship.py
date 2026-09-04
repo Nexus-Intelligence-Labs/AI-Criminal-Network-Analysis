@@ -24,3 +24,4 @@ class Relationship(BaseModel):
     weight: float = 1.0
 
     created_at: datetime
+

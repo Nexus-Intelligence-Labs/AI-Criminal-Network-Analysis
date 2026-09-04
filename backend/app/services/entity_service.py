@@ -3,3 +3,5 @@ class EntityService:
 
     def list_entities(self) -> None:
         raise NotImplementedError
+
+

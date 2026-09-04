@@ -9,3 +9,5 @@ class TimelineEvent(BaseModel):
     event_type: str
     occurred_at: datetime
     description: str
+
+
