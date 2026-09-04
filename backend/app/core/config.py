@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     neo4j_password: str = ""
     backend_host: str = "127.0.0.1"
     backend_port: int = 8000
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
 
     model_config = SettingsConfigDict(env_file=None, case_sensitive=False)
 
