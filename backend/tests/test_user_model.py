@@ -104,5 +104,3 @@ class TestUserModelInstantiation:
 
         user = User(username="analyst01", password_hash=hash_password("correctpassword"))
         assert verify_password("wrongpassword", user.password_hash) is False
-
-

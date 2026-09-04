@@ -24,5 +24,3 @@ def login(request: LoginRequest, session: Session = Depends(get_db_session)):
         )
         
     return result
-
-

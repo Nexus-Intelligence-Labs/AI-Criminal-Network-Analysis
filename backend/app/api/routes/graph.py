@@ -7,8 +7,6 @@ from app.services.graph_service import GraphService
 router = APIRouter()
 
 graph_service = GraphService()
-
-
 @router.get("/{case_id}")
 def get_graph(case_id: str, current_user: User = Depends(get_current_user)):
     """
@@ -31,4 +29,3 @@ def get_shortest_path(source: str, target: str, current_user: User = Depends(get
     Return the shortest path between two entities.
     """
     return graph_service.get_shortest_path(source, target)
-

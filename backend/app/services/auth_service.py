@@ -79,5 +79,3 @@ def authenticate_user(session: Session, request: LoginRequest) -> LoginResponse:
         # In a real app, we would log the exception here.
         # For security, we never expose internal database errors to the client.
         return LoginResponse(success=False, message="Authentication failed due to an internal error")
-
-
