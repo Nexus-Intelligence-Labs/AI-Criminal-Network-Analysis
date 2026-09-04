@@ -1,0 +1,6 @@
+import { LogOut, Network, Search, Settings } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '../components/ui/Button'
+import { useAuth } from '../context/useAuth'
+
+export function Workspace() { const { session, logout } = useAuth(); const navigate = useNavigate(); async function signOut() { await logout(); navigate('/login', { replace: true }) } return <main className="workspace"><header className="workspace-header"><div className="brand-mark"><Network size={19} /></div><div><p className="brand-kicker">CNA / INTELLIGENCE</p><strong>Investigator workspace</strong></div><div className="user-menu"><span>{session?.user.displayName}</span><button className="icon-button" aria-label="Settings"><Settings size={17} /></button><Button onClick={signOut}><LogOut size={15} /> Sign out</Button></div></header><section className="workspace-content"><div className="workspace-kicker"><Search size={16} /> Workspace boundary</div><h1>Your investigator application is ready for integration.</h1><p>The authentication layer is protecting this route. Dashboard, graph, entity, case, search, timeline, evidence, alert, analytics, and settings surfaces can be mounted here without changing the auth boundary.</p></section></main> }
