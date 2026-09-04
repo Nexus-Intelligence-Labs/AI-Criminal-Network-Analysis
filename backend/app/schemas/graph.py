@@ -15,3 +15,5 @@ class GraphEdge(BaseModel):
 class GraphResponse(BaseModel):
     nodes: list[GraphNode] = []
     edges: list[GraphEdge] = []
+
+

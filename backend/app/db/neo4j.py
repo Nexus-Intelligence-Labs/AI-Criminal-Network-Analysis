@@ -19,3 +19,5 @@ def close_neo4j_driver() -> None:
     if get_neo4j_driver.cache_info().currsize:
         get_neo4j_driver().close()
         get_neo4j_driver.cache_clear()
+
+

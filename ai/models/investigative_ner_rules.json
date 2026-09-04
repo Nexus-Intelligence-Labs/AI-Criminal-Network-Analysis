@@ -1,0 +1,55 @@
+{
+  "model_name": "investigative-ner-rules",
+  "version": 1,
+  "description": "Offline entity-recognition rules for investigative demo data.",
+  "entity_patterns": [
+    {
+      "label": "PERSON",
+      "pattern": "Rahul Sharma"
+    },
+    {
+      "label": "PERSON",
+      "pattern": "Priya"
+    },
+    {
+      "label": "PERSON",
+      "pattern": "Amit Kumar"
+    },
+    {
+      "label": "PERSON",
+      "pattern": "Ravi Kumar"
+    },
+    {
+      "label": "GPE",
+      "pattern": "Hyderabad"
+    },
+    {
+      "label": "GPE",
+      "pattern": "Bengaluru"
+    },
+    {
+      "label": "GPE",
+      "pattern": "Mumbai"
+    },
+    {
+      "label": "GPE",
+      "pattern": "Delhi"
+    },
+    {
+      "label": "GPE",
+      "pattern": "Chennai"
+    },
+    {
+      "label": "ORG",
+      "pattern": "State Bank of India"
+    },
+    {
+      "label": "ORG",
+      "pattern": "Indian Railways"
+    },
+    {
+      "label": "ORG",
+      "pattern": "Cyber Crime Police"
+    }
+  ]
+}

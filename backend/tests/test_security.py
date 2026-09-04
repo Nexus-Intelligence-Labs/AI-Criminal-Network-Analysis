@@ -56,3 +56,5 @@ class TestVerifyPassword:
         password."""
         hash_a = hash_password("passwordA")
         assert verify_password("passwordB", hash_a) is False
+
+

@@ -29,3 +29,4 @@ def get_shortest_path(source: str, target: str):
     Return the shortest path between two entities.
     """
     return graph_service.get_shortest_path(source, target)
+

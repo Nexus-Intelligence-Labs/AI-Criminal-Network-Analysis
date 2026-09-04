@@ -9,3 +9,5 @@ class Alert(BaseModel):
     severity: str
     created_at: datetime
     status: str = "OPEN"
+
+

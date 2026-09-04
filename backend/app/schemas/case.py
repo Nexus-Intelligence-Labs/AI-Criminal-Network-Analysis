@@ -8,3 +8,5 @@ class Case(BaseModel):
     title: str
     status: str = "OPEN"
     created_at: datetime
+
+

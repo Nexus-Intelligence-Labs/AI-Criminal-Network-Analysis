@@ -3,3 +3,5 @@ class CaseService:
 
     def list_cases(self) -> None:
         raise NotImplementedError
+
+
