@@ -1,0 +1,15 @@
+import { useState } from 'react'
+import { BellRing, Plus, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+interface Rule { id: number; event: string; subject: string; priority: string }
+
+export function AlertRules() {
+  const [rules, setRules] = useState<Rule[]>([{ id: 1, event: 'New relationship detected', subject: 'Any organization', priority: 'High' }])
+  const [event, setEvent] = useState('New relationship detected')
+  const [subject, setSubject] = useState('Any organization')
+  const [priority, setPriority] = useState('High')
+  return <div className="page-frame flex-1 overflow-y-auto p-6"><div className="mb-6"><p className="eyebrow">Monitoring / Local demo state</p><h1 className="page-title">Alert rule builder</h1><p className="mt-2 text-sm text-muted-foreground">Configure the conditions that should surface a review signal.</p></div><div className="grid max-w-4xl gap-5 lg:grid-cols-[1fr_1.2fr]"><Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><BellRing className="h-4 w-4 text-amber-400" /> Create alert rule</CardTitle></CardHeader><CardContent className="space-y-4"><label className="field"><span className="label">When</span><select className="input" value={event} onChange={(e) => setEvent(e.target.value)}><option>New relationship detected</option><option>New entity</option><option>Cross-case appearance</option><option>Rapid network expansion</option><option>Identity conflict</option><option>Activity spike</option></select></label><label className="field"><span className="label">Between</span><select className="input" value={subject} onChange={(e) => setSubject(e.target.value)}><option>Any organization</option><option>Raj Kumar</option><option>Northstar Logistics</option><option>Any high-risk entity</option></select></label><label className="field"><span className="label">Priority</span><select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}><option>Critical</option><option>High</option><option>Medium</option></select></label><Button onClick={() => setRules((current) => [...current, { id: Date.now(), event, subject, priority }])}><Plus className="h-4 w-4" /> Create rule</Button></CardContent></Card><Card><CardHeader><CardTitle className="text-base">Active rules</CardTitle></CardHeader><CardContent className="space-y-3">{rules.map((rule) => <div key={rule.id} className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm"><div className="min-w-0 flex-1"><strong>{rule.event}</strong><p className="text-xs text-muted-foreground">Between {rule.subject}</p></div><Badge variant={rule.priority === 'Critical' ? 'destructive' : 'secondary'}>{rule.priority}</Badge><Button size="icon" variant="ghost" onClick={() => setRules((current) => current.filter((item) => item.id !== rule.id))} aria-label="Delete rule"><Trash2 className="h-4 w-4" /></Button></div>)}</CardContent></Card></div></div>
+}

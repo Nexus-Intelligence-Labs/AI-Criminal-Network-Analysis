@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Search as SearchIcon, Filter, X } from 'lucide-react'
+import { ChevronDown, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { EntityType } from '@/types'
 
@@ -28,6 +29,9 @@ export function Search() {
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<EntityType | 'all'>('all')
   const [confidenceFilter, setConfidenceFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
+  const [showBuilder, setShowBuilder] = useState(false)
+  const [hopDepth, setHopDepth] = useState('3')
+  const [relationshipFilter, setRelationshipFilter] = useState('any')
 
   const filteredEntities = mockEntities.filter(entity => {
     const matchesSearch = entity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,11 +65,12 @@ export function Search() {
       <div className="flex-1 p-6 overflow-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Entity Search</CardTitle>
+            <CardTitle className="flex items-center justify-between">Entity Search <Button variant="outline" size="sm" onClick={() => setShowBuilder((value) => !value)}><Sparkles className="mr-2 h-4 w-4 text-cyan-400" />Query builder <ChevronDown className="ml-1 h-3 w-3" /></Button></CardTitle>
           </CardHeader>
           <CardContent>
             {/* Search & Filters */}
             <div className="space-y-4 mb-6">
+              {showBuilder && <div className="query-builder"><div><span className="query-label">Find</span><Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as EntityType | 'all')}><SelectTrigger><SelectValue placeholder="People" /></SelectTrigger><SelectContent><SelectItem value="all">Any entity</SelectItem><SelectItem value="person">People</SelectItem><SelectItem value="organization">Organizations</SelectItem><SelectItem value="vehicle">Vehicles</SelectItem></SelectContent></Select></div><span className="query-label">connected to</span><Input placeholder="Organization X" /><span className="query-label">within</span><select className="input h-9" value={hopDepth} onChange={(event) => setHopDepth(event.target.value)}><option value="1">1 hop</option><option value="2">2 hops</option><option value="3">3 hops</option><option value="4">4 hops</option></select><span className="query-label">with</span><select className="input h-9" value={relationshipFilter} onChange={(event) => setRelationshipFilter(event.target.value)}><option value="any">Any relationship</option><option value="knows">Knows</option><option value="owns">Owns</option><option value="contacted">Contacted</option></select><Button onClick={() => setShowBuilder(false)}>Run investigation</Button></div>}
               <div className="flex gap-4">
                 <div className="flex-1 relative">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
