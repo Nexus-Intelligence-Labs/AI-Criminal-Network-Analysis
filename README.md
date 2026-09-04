@@ -1,1518 +1,688 @@
 # AI-Powered Criminal Network Analysis System
 
-> AI-powered Investigative Intelligence Graph for Smart India Hackathon.
+## Overview
 
-An investigative intelligence platform designed to transform fragmented structured and unstructured crime-related information into a connected, searchable, and explainable criminal intelligence network.
+AI-Criminal-Network-Analysis is a multi-component investigation platform
+foundation. It combines:
 
----
+- a FastAPI backend with PostgreSQL and Neo4j connection layers;
+- Python NLP, entity-resolution, relationship, event, and ingestion pipelines;
+- graph loading, querying, and early network analytics code; and
+- a React investigator dashboard with graph exploration and mock investigative
+  workflows.
 
-## Table of Contents
+The repository is currently a development-stage system. The backend security
+foundation is implemented, while most domain endpoints and the dashboard data
+flows remain incomplete or demo-only. This README describes the code that
+exists today; planned capabilities are explicitly labelled.
 
-- [Overview](#overview)
-- [Problem Statement](#problem-statement)
-- [Project Goal](#project-goal)
-- [Why This System](#why-this-system)
-- [Core Pipeline](#core-pipeline)
-- [System Architecture](#system-architecture)
-- [Core Capabilities](#core-capabilities)
-- [Investigative Intelligence Graph](#investigative-intelligence-graph)
-- [Graph Analytics](#graph-analytics)
-- [Anomaly Detection](#anomaly-detection)
-- [Explainable Intelligence](#explainable-intelligence)
-- [Investigator Dashboard](#investigator-dashboard)
-- [Technology Stack](#technology-stack)
-- [Repository Structure](#repository-structure)
-- [Data Architecture](#data-architecture)
-- [Backend Architecture](#backend-architecture)
-- [Security Architecture](#security-architecture)
-- [Development Environment](#development-environment)
-- [Local Setup](#local-setup)
-- [Running the Database Infrastructure](#running-the-database-infrastructure)
-- [Running the Backend](#running-the-backend)
-- [Testing](#testing)
-- [Code Quality](#code-quality)
-- [Git and Contribution Workflow](#git-and-contribution-workflow)
-- [Team Structure](#team-structure)
-- [Development Principles](#development-principles)
-- [Data Privacy and Security](#data-privacy-and-security)
-- [Project Roadmap](#project-roadmap)
-- [Current Project Status](#current-project-status)
-- [License](#license)
+### Status legend
 
----
+- ✅ **Implemented** — present in the repository and supported by the current
+  implementation.
+- 🟡 **Mock/demo** — interactive or representative UI/data only; not connected
+  to persistent backend workflows.
+- 🟠 **Partially integrated** — meaningful code exists, but important
+  integration, persistence, or operational pieces are still missing.
+- 🔴 **Not implemented / blocked** — planned, unavailable, or currently blocked
+  by a known defect or missing integration.
 
-# Overview
+## Problem Statement
 
-Modern criminal investigations often involve large volumes of fragmented information collected from many different sources.
+Investigative records can contain people, organizations, phones, vehicles,
+financial activity, communications, events, and relationships spread across
+multiple sources. The project provides a place to normalize those records,
+extract structured intelligence, resolve identities, store network context,
+and expose investigation-oriented views.
 
-Relevant information may be distributed across:
+## Project Goals
 
-- First Information Reports (FIRs)
-- criminal histories
-- intelligence reports
-- call-detail records
-- financial records
-- surveillance information
-- vehicle records
-- organizational information
-- social intelligence
-- case and evidence records
+1. Normalize heterogeneous investigative records.
+2. Extract entities, relationships, and events with source traceability.
+3. Resolve references to the same real-world entity.
+4. Represent relationships in a Neo4j knowledge graph.
+5. Support graph queries and network analytics.
+6. Provide a protected investigator-facing API and dashboard.
+7. Keep uncertain or model-generated results reviewable and explainable.
 
-These sources may contain incomplete, duplicated, inconsistent, or differently formatted representations of the same real-world entity.
+## Current Scope at a Glance
 
-The purpose of this system is to combine these heterogeneous sources and transform them into a unified investigative intelligence environment.
+| Area | Current state |
+| --- | --- |
+| Backend API | FastAPI routes and security foundation; most domain handlers are placeholders |
+| PostgreSQL | SQLAlchemy models and connection factory; no migration system |
+| Neo4j | Driver, writers, loaders, queries, and graph service code; schema/integration is incomplete |
+| AI/NLP | Working modules for extraction, resolution, structured processors, and pipeline orchestration |
+| Graph analytics | Early degree/PageRank/Louvain code; graph analytics modules currently have syntax errors |
+| Frontend | React/Vite investigator UI using local mock data |
+| Frontend authentication | Development-only mock session; not connected to backend JWT login |
+| End-to-end integration | Not complete |
+| Production readiness | Not claimed |
 
-The platform combines:
+## System Architecture
 
-```text
-Data Engineering
-        +
-AI / NLP
-        +
-Entity Resolution
-        +
-Knowledge Graphs
-        +
-Graph Analytics
-        +
-Anomaly Detection
-        +
-Backend Services
-        +
-Security
-        +
-Investigator UI
-```
-
-The result is intended to help investigators move from isolated records toward connected intelligence.
-
----
-
-# Problem Statement
-
-## Smart India Hackathon — Problem Statement 26189
-
-**AI-Powered Criminal Network Analysis System**
-
-The project addresses the challenge of analyzing fragmented criminal intelligence and discovering connections between people, organizations, vehicles, locations, communications, financial activity, cases, and other investigative entities.
-
-Traditional tabular systems are effective for storing individual records, but relationships across thousands of records can be difficult to discover manually.
-
-This system aims to provide an intelligence-analysis layer that connects these records and makes relationships, networks, patterns, anomalies, and supporting evidence easier to investigate.
-
----
-
-# Project Goal
-
-Build an investigative intelligence platform that:
-
-- integrates structured and unstructured crime-related data
-- cleans and normalizes heterogeneous sources
-- extracts entities using AI/NLP
-- extracts relationships from unstructured information
-- resolves references to the same real-world entity
-- constructs a unified knowledge graph
-- performs graph and network analysis
-- detects potentially significant anomalies and patterns
-- connects analytical results to supporting evidence
-- provides explainable investigative intelligence
-- exposes functionality through a backend API
-- provides an interactive investigator dashboard
-- incorporates authentication, authorization, and audit controls
-
----
-
-# Why This System
-
-A conventional database can answer questions such as:
+The intended repository flow is:
 
 ```text
-"Show records belonging to Person A."
+Source records
+    |
+    v
+AI preprocessing and structured processors
+    |
+    +--> NER / entity extraction
+    +--> relationship and event extraction
+    +--> entity resolution
+    |
+    v
+Graph adapter / Neo4j writer
+    |
+    v
+Neo4j graph queries and analytics
+    |
+    v
+FastAPI API
+    |
+    v
+React investigator dashboard
 ```
 
-An investigative graph can help answer questions such as:
+The flow is not yet a single production pipeline. AI writers, graph schema
+conventions, backend graph queries, and frontend data services still require
+integration work.
+
+## Repository Structure
 
 ```text
-"Who is Person A connected to?"
-
-"Which organization connects these two individuals?"
-
-"Which people share communication or financial relationships?"
-
-"What entities form the central part of this network?"
-
-"What unusual patterns exist around this case?"
-
-"What evidence supports this relationship?"
+.
+├── ai/                 NLP, entity resolution, pipelines, AI tests
+├── backend/            FastAPI application, models, schemas, services, tests
+├── data/               Source-category placeholders and data documentation
+├── docs/               Architecture, API, data-contract, and decision notes
+├── frontend/           React/Vite investigator dashboard
+├── graph/              Neo4j queries, loaders, services, analytics, schema
+├── scripts/            Reserved ingestion, seed, and utility locations
+├── tests/              Repository-level test placeholder area
+├── .env.example        Development environment variable template
+└── docker-compose.yml  PostgreSQL and Neo4j development services
 ```
 
-The objective is not simply to collect more data.
+The source-category directories under `data/` and the subdirectories under
+`scripts/` currently contain placeholders rather than a complete ingestion
+deployment.
 
-The objective is to make relationships across the data easier to understand.
+## Technology Stack
 
----
+### Backend
 
-# Core Pipeline
-
-```text
-Raw Data
-   │
-   ▼
-Data Ingestion
-   │
-   ▼
-Cleaning
-   │
-   ▼
-Normalization
-   │
-   ▼
-AI / NLP Extraction
-   │
-   ├── Entity Extraction
-   ├── Relationship Extraction
-   └── Information Extraction
-   │
-   ▼
-Entity Resolution
-   │
-   ▼
-Standardized Intelligence
-   │
-   ▼
-Knowledge Graph Construction
-   │
-   ▼
-Graph Analytics
-   │
-   ▼
-Anomaly Detection
-   │
-   ▼
-Explainable Intelligence
-   │
-   ▼
-FastAPI Backend
-   │
-   ▼
-Investigator Dashboard
-```
-
----
-
-# System Architecture
-
-At a high level, the system is divided into several cooperating layers.
-
-```text
-┌─────────────────────────────────────────────┐
-│              DATA SOURCES                   │
-│                                             │
-│ FIRs | CDR | Financial | Surveillance      │
-│ Criminal History | Vehicles | Reports       │
-│ Social Intelligence | Organizations        │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│           DATA ENGINEERING LAYER            │
-│                                             │
-│ Ingestion → Cleaning → Normalization       │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│               AI / NLP LAYER                │
-│                                             │
-│ Entity Extraction                           │
-│ Relationship Extraction                     │
-│ Entity Resolution                           │
-│ Embeddings / Similarity                     │
-│ Transformer Models                          │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│             INTELLIGENCE LAYER              │
-│                                             │
-│ Standardized Entities + Relationships       │
-└───────────────┬─────────────────┬───────────┘
-                │                 │
-                ▼                 ▼
-        ┌──────────────┐   ┌──────────────┐
-        │ PostgreSQL   │   │    Neo4j     │
-        │              │   │              │
-        │ Structured   │   │ Graph Data   │
-        │ Application  │   │ Relationships│
-        │ Data         │   │ Networks     │
-        └──────┬───────┘   └──────┬───────┘
-               │                  │
-               └────────┬─────────┘
-                        ▼
-┌─────────────────────────────────────────────┐
-│               FASTAPI BACKEND               │
-│                                             │
-│ API Routing                                 │
-│ Search                                      │
-│ Cases                                       │
-│ Evidence                                    │
-│ Graph Operations                            │
-│ Analytics                                   │
-│ Alerts                                      │
-│ Authentication                              │
-│ Authorization                               │
-│ Audit Logging                               │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│           INVESTIGATOR DASHBOARD            │
-│                                             │
-│ Search | Graph | Cases | Evidence          │
-│ Timelines | Alerts | Analytics              │
-└─────────────────────────────────────────────┘
-```
-
----
-
-# Core Capabilities
-
-## Data Integration
-
-The platform is designed to process information from multiple intelligence domains.
-
-Examples include:
-
-- FIRs
-- criminal histories
-- CDR information
-- financial records
-- surveillance records
-- vehicle records
-- organizations
-- intelligence reports
-- social intelligence
-
-Each source may have its own schema and terminology.
-
-The data engineering layer is responsible for making these sources usable by the downstream AI and graph systems.
-
----
-
-## Entity Extraction
-
-AI/NLP components identify meaningful entities from unstructured sources.
-
-Possible entities include:
-
-- Person
-- Organization
-- Vehicle
-- Phone
-- Account
-- Location
-- Case
-- Evidence
-- Event
-- Address
-
-Example:
-
-```text
-"Rahul met Sameer in Delhi using vehicle DL01AB1234."
-
-                  │
-                  ▼
-
-Person: Rahul
-Person: Sameer
-Location: Delhi
-Vehicle: DL01AB1234
-```
-
----
-
-## Relationship Extraction
-
-Relationships between extracted entities can be inferred from textual or structured sources.
-
-Example:
-
-```text
-Rahul
-  │
-  ├── MET ──────────► Sameer
-  │
-  └── USED ─────────► Vehicle
-                           │
-                           └── LOCATED_IN ───► Delhi
-```
-
-The final relationship vocabulary will be defined by the graph schema and data contracts.
-
----
-
-## Entity Resolution
-
-Different records may refer to the same real-world entity.
-
-For example:
-
-```text
-Record A:
-Raj Kumar
-
-Record B:
-R. Kumar
-
-Record C:
-Raj K.
-
-Record D:
-Raj Kumar, Delhi
-```
-
-Entity resolution attempts to determine whether these records represent the same entity.
-
-Potential techniques include:
-
-- deterministic matching
-- identifier matching
-- fuzzy matching
-- semantic similarity
-- embeddings
-- contextual comparison
-- confidence scoring
-
-The result is a standardized entity representation.
-
----
-
-# Investigative Intelligence Graph
-
-Neo4j is used to represent relationships between entities.
-
-Example graph:
-
-```text
-                    ┌──────────────┐
-                    │ Organization │
-                    └──────┬───────┘
-                           │ MEMBER_OF
-                           │
-                    ┌──────▼───────┐
-                    │    Person    │
-                    └───┬────┬─────┘
-                        │    │
-               KNOWS    │    │ OWNS
-                        │    │
-              ┌─────────▼┐   ▼
-              │  Person  │ Vehicle
-              └────┬─────┘
-                   │
-              INVOLVED_IN
-                   │
-                   ▼
-                Case
-```
-
-The graph is intended to preserve relationships rather than reducing every piece of intelligence to isolated rows.
-
----
-
-# Graph Analytics
-
-The graph-analysis layer is designed to support investigation-oriented questions such as:
-
-- shortest paths
-- relationship traversal
-- connected components
-- centrality analysis
-- community detection
-- network clustering
-- high-connectivity entities
-- relationship pattern detection
-
-Potential analytical metrics include:
-
-- degree centrality
-- betweenness centrality
-- closeness centrality
-- connected components
-- community / cluster identification
-
-The exact algorithms used will depend on the investigation workflow and graph scale.
-
----
-
-# Anomaly Detection
-
-The system is intended to identify potentially significant patterns that may deserve investigator attention.
-
-Examples could include:
-
-- unusually dense relationships
-- unexpected network connections
-- sudden changes in relationship patterns
-- unusual communication structures
-- anomalous transaction relationships
-- entities behaving differently from normal network patterns
-
-Anomaly detection is intended to be an investigative aid.
-
-It should not be treated as an automatic determination of criminality.
-
----
-
-# Explainable Intelligence
-
-Analytical results should be accompanied by understandable supporting context.
-
-Instead of returning only:
-
-```text
-"High-risk entity"
-```
-
-the system should aim to provide:
-
-```text
-Entity
-   │
-   ├── connected to Person A
-   ├── connected to Organization B
-   ├── associated with Vehicle C
-   ├── involved in Case D
-   └── relationship supported by Evidence E
-```
-
-This helps investigators understand:
-
-- why a result appeared
-- what relationships produced it
-- which records support the result
-- how the entities are connected
-- what confidence or supporting context is available
-
----
-
-# Investigator Dashboard
-
-The frontend is intended to provide an investigator-focused interface.
-
-Planned functionality includes:
-
-## Search
-
-Search across entities, cases, relationships, evidence, and intelligence records.
-
-## Graph Exploration
-
-Interactively explore:
-
-- people
-- organizations
-- vehicles
-- locations
-- cases
-- relationships
-- network clusters
-
-## Case Investigation
-
-View information associated with a specific investigation.
-
-## Timeline Exploration
-
-Understand how events and relationships evolve over time.
-
-## Alerts
-
-Surface potentially significant analytical findings.
-
-## Analytics
-
-Present graph statistics and investigation-oriented metrics.
-
-## Evidence
-
-Connect analytical relationships with underlying supporting records.
-
----
-
-# Technology Stack
-
-## Frontend
-
-- React
-- Vite
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Cytoscape.js
-- Recharts
-- Axios
-
-### Frontend responsibilities
-
-The frontend provides the investigator-facing experience, including:
-
-- dashboards
-- search
-- graph visualization
-- filtering
-- timelines
-- case interfaces
-- alerts
-- analytics
-
----
-
-## Backend
-
-- Python
+- Python 3.12+ (the checked-in development environment uses Python 3.14)
 - FastAPI
-- Pydantic
-- Pydantic Settings
-- SQLAlchemy
-- PostgreSQL
+- Pydantic v2 and `pydantic-settings`
+- Uvicorn
+- SQLAlchemy 2
+- `psycopg`
+- Neo4j Python driver
+- PyJWT
+- `pwdlib` with Argon2
+- pytest and HTTPX
 
-### Backend responsibilities
+### AI / NLP
 
-- API routing
-- request validation
-- database access
-- graph integration
-- application services
-- search
-- case management
-- evidence handling
-- analytics
-- alerts
-- authentication
-- authorization
-
----
-
-## AI / NLP
-
-- spaCy
+- spaCy and `en_core_web_sm`
 - Hugging Face Transformers
 - Sentence Transformers
 - PyTorch
-- scikit-learn
-
-### AI responsibilities
-
-- entity extraction
-- relationship extraction
-- entity resolution
-- semantic similarity
-- embeddings
-- NLP inference
-- model experimentation
-
-GPU-intensive workloads are primarily expected to occur in this layer.
-
----
-
-## Graph
-
-- Neo4j
-- Cypher
-- Neo4j Graph Data Science
+- pandas, NumPy, scikit-learn
 - NetworkX
+- RapidFuzz / python-Levenshtein / thefuzz
 
-### Graph responsibilities
+The AI requirements file does not currently declare every import used by the
+repository. In particular, Neo4j and `google-genai` are used by some AI
+modules but are not listed in `ai/requirements.txt`; install them explicitly
+in the AI environment when exercising those modules.
 
-- graph schema
-- relationship representation
-- graph querying
-- network analysis
-- graph analytics
-- path analysis
-- clustering
+### Frontend
 
----
+- React 19
+- TypeScript
+- Vite 6
+- React Router 7
+- Tailwind CSS
+- Radix UI / shadcn-style primitives
+- Lucide React
+- Cytoscape.js
+- Recharts
 
-## DevOps
+## Data Architecture
 
-- Docker
-- Docker Compose
-- GitHub Actions
+### PostgreSQL
 
-### Development infrastructure
+The backend defines SQLAlchemy models for:
 
-Docker Compose provides reproducible local infrastructure for:
+- `User`: username, password hash, creation time;
+- `AuditLog`: security action, actor, JSON details, timestamp;
+- `Case`: case identifier, title, status, description, timestamp; and
+- `Evidence`: identifier, case, type, source, and collection timestamp.
 
-- PostgreSQL
-- Neo4j
+The PostgreSQL URL is constructed from `POSTGRES_*` settings. A session and
+engine factory exist, but the repository does not contain Alembic migrations,
+schema lifecycle management, or complete domain persistence workflows.
 
-Application code remains synchronized through GitHub rather than through Docker or Portainer.
+### Neo4j
 
----
+Neo4j is used by:
 
-# Repository Structure
+- `ai/graph/neo4j_writer.py` for AI-derived entities, relationships, and events;
+- `graph/loaders/` for graph synchronization and synthetic/demo loading;
+- `graph/services/graph_query_service.py` for case graphs, neighbors, and
+  shortest paths; and
+- `backend/app/db/neo4j.py` and the backend graph service.
 
-```text
-AI-Criminal-Network-Analysis/
-│
-├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
-│   │   └── feature_request.md
-│   ├── pull_request_template.md
-│   └── workflows/
-│
-├── ai/
-│   ├── entity_resolution/
-│   ├── models/
-│   ├── nlp/
-│   ├── pipelines/
-│   ├── relationship_extraction/
-│   ├── tests/
-│   └── README.md
-│
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── db/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   └── main.py
-│   ├── tests/
-│   ├── README.md
-│   └── requirements.txt
-│
-├── data/
-│   ├── cdr/
-│   ├── criminal_history/
-│   ├── financial/
-│   ├── fir/
-│   ├── intelligence_reports/
-│   ├── organizations/
-│   ├── social/
-│   ├── surveillance/
-│   └── vehicles/
-│
-├── docs/
-│   ├── api/
-│   ├── architecture/
-│   ├── data-contracts/
-│   └── decisions/
-│
-├── frontend/
-│
-├── graph/
-│   ├── analytics/
-│   ├── loaders/
-│   ├── queries/
-│   ├── schema/
-│   ├── tests/
-│   └── README.md
-│
-├── scripts/
-│   ├── ingestion/
-│   ├── seed/
-│   └── utilities/
-│
-├── tests/
-│   ├── fixtures/
-│   └── integration/
-│
-├── .env.example
-├── .gitignore
-└── README.md
-```
+The documented graph model describes typed `Entity` nodes, case identifiers,
+timestamps, evidence/source metadata, and relationship types. There is no
+executable schema/migration/index setup. The AI writer currently uses generic
+`:Entity` nodes and `RELATED` relationships, while backend queries and graph
+documentation expect case-aware and typed relationships. This mismatch must be
+resolved before claiming end-to-end graph correctness.
 
----
+## Backend Architecture
 
-# Data Architecture
+The application entry point is `backend/app/main.py` and registers
+`backend/app/api/router.py`.
 
-The system uses two complementary databases.
+### Registered routes
 
-## PostgreSQL
+| Route | Status |
+| --- | --- |
+| `GET /health` | Implemented health response |
+| `POST /api/auth/login` | Implemented database-backed login |
+| `GET /api/entities/` | Protected placeholder |
+| `GET /api/relationships/` | Protected placeholder |
+| `GET /api/graph/{case_id}` | Delegates to graph service |
+| `GET /api/graph/neighbors/{entity_id}` | Delegates to graph service |
+| `GET /api/graph/shortest-path` | Delegates to graph service |
+| `GET /api/search/` | Protected placeholder |
+| `GET /api/alerts/` | Protected placeholder |
+| `GET /api/cases/` | Protected placeholder |
+| `GET /api/timelines/` | Protected placeholder |
+| `GET /api/evidence/` | Protected placeholder |
+| `GET /api/analytics/` | Protected placeholder |
 
-PostgreSQL stores structured application-level data.
+Most domain route handlers currently return a not-implemented response. The
+graph route ordering should also be reviewed so the literal `shortest-path`
+route cannot be captured by `/{case_id}`.
 
-Potential examples:
+`backend/realtime_api.py` is a separate, unregistered FastAPI application for
+CDR, financial, and FIR ingestion. It initializes a global AI pipeline and is
+not the application registered by `backend/app/main.py`.
 
-- users
-- cases
-- evidence metadata
-- audit logs
-- structured application records
+## Security Architecture
 
-Development version:
+### Implemented backend controls
+
+- Password hashing and verification use Argon2 through `pwdlib`.
+- Login verifies the database user and issues a signed JWT.
+- JWTs contain `sub`, `iat`, and `exp` claims.
+- JWT verification uses a server-controlled HS256 allowlist.
+- `JWT_SECRET` must be non-empty and at least 32 UTF-8 bytes.
+- Production rejects known insecure placeholder secrets.
+- Token lifetime is positive and capped at seven days.
+- Protected routes resolve the current user from a bearer token.
+- Invalid or missing credentials receive generic authentication failures.
+- Login success/failure, authentication failure, and authorization denial audit
+  events are represented by the audit service.
+- Role helper dependencies exist and return 403 for denied roles.
+
+### Security limitations
+
+The `User` model does not have a persisted role column, and existing routes
+primarily use `get_current_user` rather than role-specific guards. There is no
+refresh/revocation mechanism, registration flow, password-reset backend,
+rate-limiting layer, security middleware, or migration-managed authorization
+policy. The separate `realtime_api.py` is not equivalent to the secured main
+API and should not be exposed without additional hardening.
+
+### Authentication architecture
+
+The frontend and backend authentication flows are currently separate:
 
 ```text
-PostgreSQL 18.6
+Frontend /login
+    |
+    v
+mockAuthService
+    |
+    v
+localStorage or sessionStorage session
+    |
+    v
+RequireAuth protects dashboard routes
 ```
-
----
-
-## Neo4j
-
-Neo4j stores graph-native intelligence.
-
-Potential graph data includes:
-
-- entities
-- relationships
-- investigation networks
-- paths
-- graph patterns
-
-Development version:
 
 ```text
-Neo4j 2026.07.1
+POST /api/auth/login
+    |
+    v
+FastAPI auth route
+    |
+    v
+Argon2 password verification
+    |
+    v
+JWT access token
+    |
+    v
+Bearer-protected backend routes
 ```
 
----
+`frontend/src/services/auth/mockAuthService.ts` accepts any non-empty
+email/password pair. `frontend/src/pages/Login.tsx` requires an email-shaped
+identifier. The frontend does not call `/api/auth/login`, does not store a
+backend JWT, and does not attach `Authorization` headers. `VITE_API_BASE_URL`
+is present in `.env.example` but is not currently used by frontend API code.
 
-## Why PostgreSQL + Neo4j?
+## AI / NLP Architecture
 
-The two systems serve different purposes.
+### Preprocessing and extraction
 
-```text
-PostgreSQL
-    │
-    ├── Structured application data
-    ├── Users
-    ├── Cases
-    ├── Evidence metadata
-    └── Audit data
+`ai/nlp/preprocessor.py` performs Unicode normalization, whitespace cleanup,
+and limited Indian `+91` phone formatting. It is not an OCR, language
+detection, sentence segmentation, or full provenance system.
 
+`ai/nlp/entity_extractor.py` combines:
 
-Neo4j
-    │
-    ├── Entities
-    ├── Relationships
-    ├── Networks
-    ├── Paths
-    └── Graph analytics
-```
+- spaCy `en_core_web_sm` NER;
+- hard-coded spaCy EntityRuler patterns;
+- Hugging Face `dslim/bert-base-NER`;
+- Indian phone and vehicle regular expressions; and
+- heuristic de-duplication.
 
-This separation allows relational workloads and graph workloads to be handled independently.
+The current extraction is primarily English/model and pattern based. It has
+limited domain coverage and does not provide a complete date extraction
+implementation.
 
----
+### Entity resolution
 
-# Backend Architecture
+`ai/entity_resolution/` supports in-memory and Neo4j-backed stores. Matching
+is same-type and combines fuzzy string similarity, phone/address/organization
+fields, and `all-MiniLM-L6-v2` embeddings. Results are categorized with
+high/review/low thresholds and persistent identities use UUID canonical IDs.
 
-The backend follows a layered FastAPI structure.
+There is no complete blocking/indexing strategy, alias-management system,
+calibration workflow, human-review persistence, or probabilistic model.
+Embeddings are computed synchronously during comparison; there is no standalone
+vector pipeline or vector index.
 
-```text
-API Routes
-    │
-    ▼
-Services
-    │
-    ├───────────────┐
-    ▼               ▼
-PostgreSQL       Neo4j
-    │               │
-    └───────┬───────┘
-            ▼
-       Application
-        Response
-```
+### Relationships, events, and pipelines
 
-Current API domains include:
+- Gemini-backed relationship extraction returns validated structured JSON from
+  an allowlisted relationship vocabulary and requires `GEMINI_API_KEY`.
+- Event extraction currently uses keyword presence for call, transfer, travel,
+  meeting, and location categories; it does not fully recover event arguments,
+  timestamps, amounts, or evidence spans.
+- CDR and financial processors normalize and validate structured records.
+- The unified pipeline accepts `cdr`, `financial`, and `fir` records, resolves
+  entities, adapts graph data, validates relationships, extracts events, and
+  can write to Neo4j.
 
-- health
-- entities
-- relationships
-- graph
-- search
-- alerts
-- cases
-- timelines
-- evidence
-- analytics
+Model initialization, external Gemini access, Neo4j availability, and missing
+AI dependency declarations affect which pipeline paths can run locally.
 
-Security functionality will be integrated into this existing backend rather than implemented as a separate backend.
+## Knowledge Graph and Analytics
 
----
+### Implemented building blocks
 
-# Security Architecture
+- Cypher query files for entity/relationship creation, case graphs, neighbors,
+  and shortest paths.
+- `GraphQueryService` that loads those queries and executes them through a
+  Neo4j driver.
+- `GraphService` used by the backend graph routes.
+- Synthetic/demo graph generators and a relationship generator.
+- Early degree-centrality and PageRank code.
+- Louvain community detection code that expects an existing GDS projection
+  named `criminalGraph`.
 
-Security is being developed as a dedicated cross-cutting concern.
+### Current defects and gaps
 
-Planned capabilities include:
+The current checkout does not compile cleanly:
 
-- password hashing
-- authentication
-- JWT authentication
-- JWT verification
-- current-user dependency
-- role-based access control
-- API authorization
-- security middleware
-- audit logging
-- secret management
-- security hardening
-- security testing
+- `graph/analytics/centrality.py` has unindented method bodies.
+- `graph/loaders/graph_loader.py` contains an unterminated/malformed
+  triple-quoted query and indentation errors.
 
-Password hashing uses:
+The graph tests directory contains no substantive tests. There is no graph
+projection lifecycle, no implemented betweenness/similarity/anomaly/influence
+analytics, and no executable schema migration or index setup. Synthetic
+loaders use development credentials, can clear data destructively, and are not
+production ingestion tooling.
 
-```text
-pwdlib + Argon2
-```
+## Frontend / Investigator Dashboard
 
-JWT functionality uses:
+The frontend is a React/Vite application with one `BrowserRouter`, providers
+for theme and authentication, a `RequireAuth` boundary, Tailwind styling,
+Radix/shadcn-style components, Cytoscape graph visualization, and Recharts
+charts.
 
-```text
-PyJWT
-```
+### Public routes
 
-Passwords must never be stored in plaintext.
+- `/login`
+- `/forgot-password`
+- `/reset-password`
+- `/access-request`
+- `/session-expired`
+- `/unauthorized`
 
-Secrets must never be committed to Git.
+### Protected routes
 
-The `.env` file is intentionally excluded from version control.
+- `/dashboard`
+- `/cases`
+- `/search`
+- `/entities`
+- `/entities/:entityId`
+- `/graph`
+- `/timeline`
+- `/evidence`
+- `/alerts`
+- `/analytics`
+- `/settings`
+- `/investigations`
+- `/reviews`
+- `/saved-queries`
+- `/alert-rules`
 
----
+Unknown paths redirect to `/dashboard`. The frontend has no matching
+`/cases/:caseId` route even though an entity-detail navigation path refers to
+case detail; that route should be added or the navigation corrected.
 
-# Security Development Roadmap
+### User-facing workflows
 
-Security is intentionally implemented incrementally:
+| Workflow | Current implementation |
+| --- | --- |
+| Login and session gate | Local mock session and protected routing |
+| Dashboard | Local graph metrics, risk/activity panels, and quick actions |
+| Cases/entities/evidence/timeline/alerts | UI pages backed by local mock datasets |
+| Graph | Cytoscape graph, filters, layouts, search, hop-depth control, and demo explanations |
+| Investigations | Local investigation selector, graph, entity inspector, evidence/assistant/notes/cross-case panels |
+| AI review | Local entity-resolution and extraction accept/reject queue |
+| Saved queries | Local create/run/duplicate/delete state |
+| Alert rules | Local rule-builder state |
+| Analytics | Local charts and selectable demo analysis scopes |
+| Settings | Frontend settings UI |
 
-```text
-Password Hashing
-        │
-        ▼
-User Security Fields
-        │
-        ▼
-Authentication / Login
-        │
-        ▼
-JWT Creation + Verification
-        │
-        ▼
-Current User Dependency
-        │
-        ▼
-RBAC
-        │
-        ▼
-Protected Endpoints
-        │
-        ▼
-Audit Logging
-        │
-        ▼
-Security Hardening
-        │
-        ▼
-Security Testing
-```
+These workflows are useful interaction prototypes, not backend-connected
+investigation records.
 
----
+## Investigative Workflow Status
 
-# Development Environment
+| Capability | Status | Meaning |
+| --- | --- | --- |
+| Investigation workspace | 🟡 Frontend/demo | Interactive local workspace; no persistence/API |
+| Multi-hop graph controls | 🟡 Frontend/demo | Controls affect the demo UI; backend query integration is pending |
+| Shortest-path UI | 🟠 Partial | Backend query exists; no complete connected frontend workflow |
+| Relationship explanation | 🟡 Frontend/demo | Local explanation panel and mock reasoning |
+| Evidence/provenance | 🟡 Frontend/demo | Local evidence records and provenance display |
+| AI assistant | 🟡 Frontend/demo | Local canned responses/citations; no model service call |
+| Entity-resolution review | 🟡 Frontend/demo | Local accept/reject queue |
+| AI extraction review | 🟡 Frontend/demo | Local accept/reject queue |
+| Cross-case analysis | 🟡 Frontend/demo | Mock shared-entity comparison |
+| Network comparison/change detection | 🔴 Planned | No connected change-detection implementation |
+| Temporal graph | 🟡 Frontend/demo | Local timeline control; no temporal backend query |
+| Saved queries | 🟡 Frontend/demo | In-memory local state |
+| Advanced search/query builder | 🟡 Frontend/demo | Local query-builder controls |
+| Investigator notes | 🟡 Frontend/demo | Local UI state; no persistence |
+| Alert-rule builder | 🟡 Frontend/demo | Local UI state; no alert execution |
+| “Why am I seeing this?” | 🟡 Frontend/demo | Local explainability panel |
+| Analytics workspace | 🟡 Frontend/demo | Local chart data and filters |
+| Dashboard insights | 🟡 Frontend/demo | Local metrics and mock graph |
 
-The current development environment is based around:
+## Mock and Demo Data
 
-- Python 3.14
-- Node.js
-- npm
+The following frontend areas use files under `frontend/src/mocks/` or local
+component state:
+
+- graph nodes and relationships;
+- cases and entities;
+- evidence and relationships;
+- dashboard metrics;
+- investigations and cross-case comparisons;
+- assistant responses and citations;
+- review queues;
+- saved queries and alert rules.
+
+The sidebar labels the application as demo mode. No mock record should be
+interpreted as a live case, real alert, verified intelligence, or model
+decision.
+
+## Local Development Setup
+
+### Prerequisites
+
 - Git
-- Docker
-- Docker Compose
-- PostgreSQL
-- Neo4j
+- Docker and Docker Compose
+- Python 3.12+ (Python 3.14 is used by the checked-in environments)
+- Node.js and npm
 
-Additional developer tooling includes:
-
-- VS Code / Antigravity
-- DBeaver
-- Portainer
-- Ruff
-- pytest
-- ESLint
-- Prettier
-- SonarQube for IDE
-
----
-
-# Local Setup
-
-## 1. Clone the repository
+### Clone and environment
 
 ```bash
-git clone git@github.com:Nexus-Intelligence-Labs/AI-Criminal-Network-Analysis.git
-
+git clone <repository-url>
 cd AI-Criminal-Network-Analysis
-```
-
----
-
-## 2. Configure environment variables
-
-Create your local environment file:
-
-```bash
 cp .env.example .env
 ```
 
-Update the values for your local setup.
+Replace development placeholder secrets before using shared or production
+environments. In particular, `JWT_SECRET` must be at least 32 UTF-8 bytes and
+must not be a known placeholder in production.
 
-Never commit `.env`.
+## Running Infrastructure
 
----
-
-## 3. Create the backend virtual environment
-
-```bash
-cd backend
-
-python -m venv .venv
-```
-
-Activate it:
-
-### Linux / macOS
-
-```bash
-source .venv/bin/activate
-```
-
-### Windows
-
-```powershell
-.venv\Scripts\activate
-```
-
----
-
-## 4. Install backend dependencies
-
-```bash
-python -m pip install -r requirements.txt
-```
-
----
-
-# Running the Database Infrastructure
-
-From the project root:
+`docker-compose.yml` provisions PostgreSQL and Neo4j:
 
 ```bash
 docker compose up -d
-```
-
-Check the containers:
-
-```bash
 docker compose ps
-```
-
-The local development stack includes:
-
-```text
-PostgreSQL
-Neo4j
-```
-
-Stop the services:
-
-```bash
 docker compose down
 ```
 
-Avoid deleting database volumes unless intentionally resetting local database data.
+Services and ports:
 
----
+- PostgreSQL: configured host port, container port 5432;
+- Neo4j Bolt: 7687; and
+- Neo4j browser/HTTP: 7474.
 
-# PostgreSQL Development Access
+The compose file uses named volumes for PostgreSQL and Neo4j data. The
+application does not currently run migrations automatically.
 
-PostgreSQL is exposed locally on:
-
-```text
-localhost:5432
-```
-
-DBeaver can be used as the primary graphical PostgreSQL development tool.
-
----
-
-# Neo4j Development Access
-
-Neo4j Browser:
-
-```text
-http://localhost:7474
-```
-
-Bolt:
-
-```text
-bolt://localhost:7687
-```
-
-Neo4j Browser can be used to inspect the graph and execute Cypher queries.
-
----
-
-# Running the Backend
-
-From:
-
-```text
-backend/
-```
-
-with the virtual environment activated:
+## Running the Backend
 
 ```bash
-uvicorn app.main:app --reload
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The backend runs on the configured application port.
+On Windows, activate with the shell-specific command for the created virtual
+environment. The API provides:
 
-FastAPI's interactive API documentation can be used to inspect the available routes during development.
+- `http://127.0.0.1:8000/health`
+- `http://127.0.0.1:8000/docs`
 
----
+The application requires `JWT_SECRET` during settings initialization. Database
+connections are created through the configured factories, but most domain
+routes are not implemented yet.
 
-# Testing
-
-Backend tests use pytest.
-
-Run the complete backend test suite:
+## Running the Frontend
 
 ```bash
-pytest
+cd frontend
+npm install
+npm run dev
 ```
 
-Run a specific test:
+Other available scripts:
 
 ```bash
-pytest tests/test_health.py
+npm run typecheck
+npm run lint
+npm run build
+npm run preview
 ```
 
-Tests should be added alongside new functionality.
+The current frontend can be explored without a running backend because its
+authentication and dashboard data are local demo implementations.
 
-Security features should include both successful and failure-path tests.
-
----
-
-# Code Quality
-
-Python code uses Ruff for linting and formatting.
-
-Check Python code:
+## Running the AI / NLP Code
 
 ```bash
-ruff check backend
+cd ai
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest tests/
 ```
 
-Format Python code:
+Some modules additionally import `neo4j` and `google-genai`, which are not
+declared in `ai/requirements.txt`. Neo4j integration tests require a reachable
+Neo4j instance and appropriate environment variables. Gemini tests require
+`GEMINI_API_KEY` and may be skipped or unavailable without external access.
+
+## Testing
+
+### Backend
 
 ```bash
-ruff format backend
+cd backend
+python -m pytest
 ```
 
-Frontend code uses ESLint and Prettier.
+The backend suite covers health, models, authentication, JWT validation,
+protected routes, authorization dependencies, audit logging, and security
+hardening. The historical development baseline was 143 passing tests; rerun
+the command above for the current checkout rather than treating that number
+as a permanent guarantee.
 
-The project aims to keep changes focused and reviewable rather than introducing large unrelated formatting changes.
-
----
-
-# Git and Contribution Workflow
-
-`main` is protected.
-
-Direct pushes to `main` are not part of the development workflow.
-
-Expected workflow:
-
-```text
-Latest main
-    │
-    ▼
-Feature branch
-    │
-    ▼
-Implementation
-    │
-    ▼
-Testing
-    │
-    ▼
-Review diff
-    │
-    ▼
-Commit
-    │
-    ▼
-Push branch
-    │
-    ▼
-Pull Request
-    │
-    ▼
-Teammate approval
-    │
-    ▼
-Resolve conversations
-    │
-    ▼
-Squash merge
-```
-
-Example:
+### AI/NLP
 
 ```bash
-git switch main
-git pull origin main
-
-git switch -c feature/my-feature
+cd ai
+python -m pytest tests/
 ```
 
-Review changes:
+The suite includes preprocessing, NER, processors, entity resolution,
+relationship parsing, events, adapters, writers, and pipeline tests. Several
+tests are infrastructure- or API-dependent.
+
+### Graph and integration
+
+The `graph/tests/` directory currently has no substantive test suite.
+Neo4j-dependent AI integration tests require running infrastructure and
+credentials. Graph compilation currently fails on the syntax defects described
+above.
+
+### Frontend
+
+There are no frontend unit-test files currently present. The available
+validation commands are:
+
+```bash
+cd frontend
+npm run typecheck
+npm run lint
+npm run build
+```
+
+The frontend has previously passed these commands with two existing
+Fast Refresh warnings from shared UI primitive exports. Vite may also report a
+large JavaScript bundle warning.
+
+## Dependency and Configuration Notes
+
+Important environment variables are documented in `.env.example`:
+
+| Variable group | Purpose |
+| --- | --- |
+| `POSTGRES_*` | PostgreSQL connection and container configuration |
+| `NEO4J_*` | Neo4j connection and container configuration |
+| `BACKEND_*` | Backend bind host and port |
+| `VITE_API_BASE_URL` | Intended frontend API base URL; currently unused |
+| `JWT_SECRET` | Required backend signing secret |
+| `JWT_ALGORITHM` | Backend JWT algorithm, restricted to HS256 |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Backend access-token lifetime |
+
+Do not commit `.env` files or real credentials. Synthetic graph scripts still
+contain development credential assumptions and should not be used as-is for
+shared environments.
+
+## Current Implementation Status
+
+| Subsystem | Status | Evidence / limitation |
+| --- | --- | --- |
+| Architecture | 🟠 Partially integrated | Components exist but are not one end-to-end production flow |
+| Backend API | 🟠 Partially integrated | FastAPI and route registration exist; most domain routes are placeholders |
+| PostgreSQL | 🟠 Partially integrated | Models/factory exist; no migrations or full persistence |
+| Neo4j | 🟠 Partially integrated | Driver/query/writer code exists; ontology and synchronization disagree |
+| Graph analytics | 🔴 Blocked | Current centrality/loader syntax errors; GDS lifecycle absent |
+| AI/NLP | 🟠 Partially integrated | Multiple working modules; external models/services and provenance remain incomplete |
+| Entity resolution | 🟠 Partially integrated | Similarity and canonical IDs exist; no durable review/calibration workflow |
+| Security | ✅ Implemented foundation | Backend Argon2/JWT/bearer/audit hardening exists; broader controls remain |
+| Frontend | 🟡 Frontend/demo | React application and protected UI routes exist |
+| Dashboard | 🟡 Frontend/demo | Metrics and graph use local data |
+| Investigative workflows | 🟡 Frontend/demo | Interactive prototypes, not persisted investigations |
+| Backend ↔ frontend | 🔴 Not integrated | Frontend does not call API or attach JWTs |
+| AI ↔ frontend | 🔴 Not integrated | Review and assistant screens use local mocks |
+| Neo4j ↔ frontend | 🔴 Not integrated | Graph visualization uses frontend mock graph data |
+| End-to-end integration | 🔴 Planned | Requires API, persistence, graph, and AI wiring |
+| Testing | 🟠 Partial | Backend/AI suites exist; graph/frontend unit coverage is limited |
+| Deployment | 🔴 Development only | Compose is local infrastructure, not a production deployment |
+| Production readiness | 🔴 Not claimed | Security and integration gaps remain |
+
+## Roadmap
+
+The next work should be driven by the actual gaps:
+
+1. Fix graph module syntax errors and add graph tests.
+2. Establish executable Neo4j constraints, indexes, and projection lifecycle.
+3. Reconcile AI writer, graph loader, schema, and backend query ontology,
+   including `case_id`, typed relationships, and source provenance.
+4. Add PostgreSQL migrations and complete domain persistence services.
+5. Connect frontend authentication to `/api/auth/login`, JWT storage, token
+   expiry handling, and bearer requests.
+6. Replace frontend mocks with authenticated API services incrementally.
+7. Add durable investigations, evidence, notes, saved queries, reviews, and
+   alert rules.
+8. Add retries, batching, model caching, observability, and queue-based
+   ingestion for AI pipelines.
+9. Add frontend tests, graph tests, API integration tests, and infrastructure
+   test profiles.
+10. Remove hard-coded credentials and define a deployment/security process.
+11. Reduce the frontend bundle and add production build/deployment automation.
+
+## Responsible and Explainable Intelligence
+
+The project is intended to keep extracted intelligence traceable to source
+records and to avoid unsupported inference. Current implementation does not
+yet provide complete provenance spans, calibrated confidence, durable human
+review, or production auditability for every AI-derived graph change.
+
+The frontend assistant, explanations, evidence panels, and review queues are
+explicitly local demo workflows. They must not be presented as authoritative
+model conclusions or live investigative intelligence.
+
+## Contributing and Git Workflow
+
+Use focused branches and review changes before merging:
 
 ```bash
 git status
-git diff
+git diff --check
 ```
 
-Stage only intended files:
+Keep credentials and generated environments out of commits. Changes that
+affect authentication, graph ontology, AI provenance, or data retention should
+include tests and documentation updates.
 
-```bash
-git add path/to/file
-```
+## License
 
-Commit:
-
-```bash
-git commit -m "feat: describe change"
-```
-
-Push:
-
-```bash
-git push -u origin feature/my-feature
-```
-
-Never use:
-
-```bash
-git add .
-```
-
-blindly in a project containing secrets or generated files.
-
----
-
-# Team Structure
-
-The project is divided into three working groups.
-
-## Group 1 — Data + AI
-
-### Person 5 — Data Engineering
-
-Responsibilities:
-
-- data ingestion
-- cleaning
-- normalization
-- dataset preparation
-- raw source processing
-- standardized intelligence preparation
-
-### Person 3 — AI / NLP
-
-Responsibilities:
-
-- entity extraction
-- relationship extraction
-- entity resolution
-- NLP pipelines
-- embeddings
-- transformer models
-- inference
-- model experimentation
-
----
-
-## Group 2 — Graph + Backend
-
-### Person 4 — Graph / Network Analytics
-
-Responsibilities:
-
-- Neo4j
-- graph schema
-- nodes and relationships
-- Cypher
-- graph analytics
-- network analysis
-- centrality
-- clustering
-- path analysis
-
-### Person 2 — Backend + DevOps / Integration
-
-Responsibilities:
-
-- FastAPI
-- backend APIs
-- service layer
-- PostgreSQL
-- Neo4j integration
-- Docker
-- DevOps
-- deployment
-- system integration
-
----
-
-## Group 3 — Frontend + Security
-
-### Person 1 — Frontend / UI-UX
-
-Responsibilities:
-
-- React
-- UI/UX
-- investigator dashboard
-- search
-- filtering
-- graph visualization
-- timelines
-- investigation workflows
-
-### Person 6 — Security + Backend Support
-
-Responsibilities:
-
-- authentication
-- password hashing
-- JWT
-- RBAC
-- API security
-- security middleware
-- secrets management
-- audit logging
-- security hardening
-- security testing
-- backend security integration
-
----
-
-# Development Principles
-
-## Modular ownership
-
-Each group owns a technical domain while integration happens through shared contracts.
-
-## Incremental development
-
-Features should be implemented in small, testable stages.
-
-## Reproducibility
-
-Docker Compose and pinned infrastructure versions help developers reproduce the same local database environment.
-
-## Security by design
-
-Security should be incorporated during development instead of being treated as a final deployment step.
-
-## Explainability
-
-Analytical findings should be connected to understandable relationships, evidence, and supporting context.
-
-## Minimal destructive changes
-
-Existing functionality should not be rewritten unless there is a concrete reason.
-
----
-
-# Data Privacy and Security
-
-This project is intended for intelligence-analysis scenarios.
-
-Do not commit real sensitive law-enforcement information to the repository.
-
-Development data should be:
-
-- synthetic
-- anonymized
-- appropriately licensed
-- publicly usable
-- or otherwise authorized for development purposes
-
-Never commit:
-
-- `.env`
-- database passwords
-- JWT secrets
-- API keys
-- cloud credentials
-- private keys
-- production data
-
-Because the repository is public, every committed file should be treated as publicly accessible.
-
----
-
-# Project Roadmap
-
-```text
-Phase 1
-Repository + Infrastructure
-        │
-        ▼
-Phase 2
-Backend + Database Foundations
-        │
-        ▼
-Phase 3
-Data Engineering
-        │
-        ▼
-Phase 4
-AI / NLP
-        │
-        ▼
-Phase 5
-Knowledge Graph
-        │
-        ▼
-Phase 6
-Graph Analytics + Anomaly Detection
-        │
-        ▼
-Phase 7
-Security + Authentication
-        │
-        ▼
-Phase 8
-Investigator Dashboard
-        │
-        ▼
-Phase 9
-System Integration
-        │
-        ▼
-Phase 10
-Testing + Hardening
-        │
-        ▼
-Phase 11
-Demonstration / Deployment
-```
-
----
-
-# Current Project Status
-
-> This section should be updated as features are completed.
-
-## Infrastructure
-
-- [x] GitHub organization
-- [x] Repository structure
-- [x] Team structure
-- [x] Protected `main`
-- [x] Pull request workflow
-- [x] Docker environment
-- [x] PostgreSQL development environment
-- [x] Neo4j development environment
-- [x] Environment variable template
-
-## Backend
-
-- [x] FastAPI foundation
-- [x] PostgreSQL integration foundation
-- [x] Neo4j integration foundation
-- [x] API route structure
-- [x] Initial database models
-- [x] Initial schemas
-- [x] Initial service layer
-
-## Security
-
-- [x] Security dependency foundation
-- [ ] Password hashing integration
-- [ ] User authentication
-- [ ] JWT authentication
-- [ ] Current-user dependency
-- [ ] RBAC
-- [ ] Protected API endpoints
-- [ ] Audit logging integration
-- [ ] Security hardening
-- [ ] Security test suite
-
-## AI / NLP
-
-- [ ] Data ingestion pipeline
-- [ ] Entity extraction
-- [ ] Relationship extraction
-- [ ] Entity resolution
-- [ ] Embedding pipeline
-- [ ] Production model integration
-
-## Graph
-
-- [ ] Final graph ontology
-- [ ] Graph loaders
-- [ ] Production graph construction
-- [ ] Graph analytics
-- [ ] Advanced investigation queries
-- [ ] Anomaly detection
-
-## Frontend
-
-- [ ] Investigator dashboard
-- [ ] Authentication UI
-- [ ] Entity search
-- [ ] Graph visualization
-- [ ] Case workflows
-- [ ] Timeline views
-- [ ] Alert interface
-
----
-
-# Documentation
-
-Additional technical documentation is organized under:
-
-```text
-docs/
-├── api/
-├── architecture/
-├── data-contracts/
-└── decisions/
-```
-
-Component-specific documentation is available in:
-
-```text
-ai/README.md
-backend/README.md
-graph/README.md
-```
-
----
-
-# License
-
-A project license has not yet been selected.
-
----
-
-# Project Status
-
-**Active Development**
-
-This repository represents an actively evolving Smart India Hackathon project.
-
-The architecture, graph ontology, AI pipelines, APIs, security controls, and investigator interface are being developed incrementally.
-
----
+No project license file is currently present in the repository. Add and
+document a license before distributing the software.
