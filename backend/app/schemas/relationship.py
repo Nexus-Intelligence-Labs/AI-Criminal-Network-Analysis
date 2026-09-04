@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 
 
 class Relationship(BaseModel):
+    """A relationship associated with a specific case."""
+
+    case_id: str
     source: str
     relationship: str
     target: str
