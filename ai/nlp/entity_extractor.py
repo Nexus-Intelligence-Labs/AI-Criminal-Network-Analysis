@@ -1,52 +1,31 @@
-import json
 import re
-from pathlib import Path
-from typing import Any
+import spacy
+from transformers import pipeline
 
-try:
-    import spacy
-except ImportError:  # The extractor has a dependency-free fallback.
-    spacy = None
-
-try:
-    from transformers import pipeline
-except ImportError:  # Transformer inference is optional for local development.
-    pipeline = None
-
-try:
-    from .patterns import ENTITY_PATTERNS
-except ImportError:  # Supports running tests from the ai/ directory.
-    from nlp.patterns import ENTITY_PATTERNS
+from nlp.patterns import ENTITY_PATTERNS
 
 
 class EntityExtractor:
 
-    def __init__(self, use_transformer: bool = False):
-        """Create an extractor with local rules and optional NLP backends.
+    def __init__(self):
 
-        ``use_transformer`` is disabled by default because downloading model
-        weights during API startup makes local development and tests fragile.
-        """
-        self.nlp = None
-        self.transformer_ner = None
-        self.rule_patterns = self._load_rule_patterns()
+        # spaCy model
+        self.nlp = spacy.load("en_core_web_sm")
 
-        if spacy is not None:
-            try:
-                self.nlp = spacy.load("en_core_web_sm")
-                ruler = self.nlp.add_pipe("entity_ruler", before="ner")
-                ruler.add_patterns(self.rule_patterns)
-            except (OSError, ValueError):
-                # The packaged rule model remains available when spaCy's
-                # downloadable language model is not installed.
-                self.nlp = None
+        # EntityRuler
+        self.ruler = self.nlp.add_pipe(
+            "entity_ruler",
+            before="ner"
+        )
 
-        if use_transformer and pipeline is not None:
-            self.transformer_ner = pipeline(
-                "ner",
-                model="dslim/bert-base-NER",
-                aggregation_strategy="simple",
-            )
+        self.ruler.add_patterns(ENTITY_PATTERNS)
+
+        # Transformer NER
+        self.transformer_ner = pipeline(
+            "ner",
+            model="dslim/bert-base-NER",
+            aggregation_strategy="simple"
+        )
 
         # Indian vehicle registration numbers
         self.vehicle_pattern = re.compile(
@@ -98,9 +77,9 @@ class EntityExtractor:
         # 1. spaCy NER
         # --------------------------------------------------
 
-        doc_entities = self.nlp(text).ents if self.nlp is not None else []
+        doc = self.nlp(text)
 
-        for ent in doc_entities:
+        for ent in doc.ents:
 
             if ent.label_ == "PERSON":
 
@@ -142,9 +121,7 @@ class EntityExtractor:
         # 2. Transformer NER
         # --------------------------------------------------
 
-        transformer_entities = (
-            self.transformer_ner(text) if self.transformer_ner is not None else []
-        )
+        transformer_entities = self.transformer_ner(text)
 
         transformer_entities.sort(
             key=lambda x: x.get("start", 0)
@@ -226,34 +203,7 @@ class EntityExtractor:
             )
 
         # --------------------------------------------------
-        # 3. Local model rules (available without downloads)
-        # --------------------------------------------------
-
-        for pattern in self.rule_patterns:
-            label = pattern["label"]
-            entity_type = {
-                "PERSON": "PERSON",
-                "GPE": "LOCATION",
-                "LOC": "LOCATION",
-                "ORG": "ORGANIZATION",
-            }.get(label)
-            if entity_type is None or not isinstance(pattern.get("pattern"), str):
-                continue
-
-            matches = re.finditer(re.escape(pattern["pattern"]), text, re.IGNORECASE)
-            for match in matches:
-                self._add_entity(
-                    entities,
-                    entity_type,
-                    match.group(),
-                    source_id,
-                    0.95,
-                    match.start(),
-                    match.end(),
-                )
-
-        # --------------------------------------------------
-        # 4. Vehicle extraction
+        # 3. Vehicle extraction
         # --------------------------------------------------
 
         for match in self.vehicle_pattern.finditer(text):
@@ -269,7 +219,7 @@ class EntityExtractor:
             )
 
         # --------------------------------------------------
-        # 5. Phone extraction
+        # 4. Phone extraction
         # --------------------------------------------------
 
         for match in self.phone_pattern.finditer(text):
@@ -285,13 +235,13 @@ class EntityExtractor:
             )
 
         # --------------------------------------------------
-        # 6. Deduplicate
+        # 5. Deduplicate
         # --------------------------------------------------
 
         entities = self._deduplicate(entities)
 
         # --------------------------------------------------
-        # 7. Re-number entity IDs
+        # 6. Re-number entity IDs
         # --------------------------------------------------
 
         for i, entity in enumerate(entities, start=1):
@@ -302,24 +252,6 @@ class EntityExtractor:
             entity.pop("_end", None)
 
         return entities
-
-    @staticmethod
-    def _load_rule_patterns() -> list[dict[str, Any]]:
-        """Load the generated local model when present, otherwise use defaults."""
-        model_path = (
-            Path(__file__).parent.parent
-            / "models"
-            / "investigative_ner_rules.json"
-        )
-        if model_path.exists():
-            try:
-                payload = json.loads(model_path.read_text(encoding="utf-8"))
-                patterns = payload.get("entity_patterns")
-                if isinstance(patterns, list):
-                    return patterns
-            except (OSError, json.JSONDecodeError):
-                pass
-        return ENTITY_PATTERNS
 
     def _deduplicate(self, entities):
 

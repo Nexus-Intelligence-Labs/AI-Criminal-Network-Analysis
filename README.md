@@ -1028,28 +1028,6 @@ Avoid deleting database volumes unless intentionally resetting local database da
 
 ---
 
-# Running the Full Stack with Docker
-
-To run the API, PostgreSQL, and Neo4j consistently on any computer with
-Docker Desktop installed, copy `.env.example` to `.env`, set secure local
-passwords, then run from the repository root:
-
-```bash
-docker compose up --build -d
-```
-
-The API is available at `http://localhost:8000` and its Swagger documentation
-is available at `http://localhost:8000/docs`. Neo4j Browser is available at
-`http://localhost:7474`.
-
-For another device on the same network, use the Docker host's LAN IP instead
-of `localhost` (for example, `http://192.168.1.20:8000/docs`) and allow port
-8000 through that host's firewall. A publicly accessible URL requires deploying
-this Compose stack to a server or cloud platform; do not expose the database
-ports publicly.
-
----
-
 # PostgreSQL Development Access
 
 PostgreSQL is exposed locally on:

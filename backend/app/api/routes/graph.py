@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.dependencies import get_current_user
+from app.models.user import User
 from app.services.graph_service import GraphService
 
 router = APIRouter()
@@ -8,7 +10,7 @@ graph_service = GraphService()
 
 
 @router.get("/{case_id}")
-def get_graph(case_id: str):
+def get_graph(case_id: str, current_user: User = Depends(get_current_user)):
     """
     Return the complete graph for an investigation.
     """
@@ -16,7 +18,7 @@ def get_graph(case_id: str):
 
 
 @router.get("/neighbors/{entity_id}")
-def get_neighbors(entity_id: str):
+def get_neighbors(entity_id: str, current_user: User = Depends(get_current_user)):
     """
     Return all entities directly connected to the given entity.
     """
@@ -24,7 +26,7 @@ def get_neighbors(entity_id: str):
 
 
 @router.get("/shortest-path")
-def get_shortest_path(source: str, target: str):
+def get_shortest_path(source: str, target: str, current_user: User = Depends(get_current_user)):
     """
     Return the shortest path between two entities.
     """

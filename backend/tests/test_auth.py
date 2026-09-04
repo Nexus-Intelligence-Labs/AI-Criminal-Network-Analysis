@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.schemas.auth import LoginRequest
 from app.services.auth_service import authenticate_user
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_token
 from app.models.user import User
 
 # --- UNIT TESTS FOR AUTH SERVICE (using mock DB Session) ---
@@ -29,6 +29,13 @@ def test_authenticate_user_success():
     assert response.success is True
     assert response.user_id == 1
     assert "successful" in response.message.lower()
+    assert isinstance(response.access_token, str)
+    assert response.token_type == "bearer"
+    
+    # Verify the token is a valid JWT with the correct subject
+    payload = verify_token(response.access_token)
+    assert payload["sub"] == "1"
+    assert "exp" in payload
     
     # Ensure sensitive fields are never in the response schema
     assert not hasattr(response, "password")
@@ -50,6 +57,7 @@ def test_authenticate_user_wrong_password():
     
     assert response.success is False
     assert response.user_id is None
+    assert response.access_token is None
     assert "invalid" in response.message.lower()
 
 def test_authenticate_user_not_found():
@@ -62,6 +70,7 @@ def test_authenticate_user_not_found():
     
     assert response.success is False
     assert response.user_id is None
+    assert response.access_token is None
     assert "invalid" in response.message.lower()
 
 def test_authenticate_user_no_password_hash():
@@ -80,6 +89,7 @@ def test_authenticate_user_no_password_hash():
     
     assert response.success is False
     assert response.user_id is None
+    assert response.access_token is None
     assert "invalid" in response.message.lower()
 
 
@@ -113,8 +123,16 @@ def test_login_api_success():
     data = response.json()
     assert data["success"] is True
     assert data["user_id"] == 1
+    assert "access_token" in data
+    assert isinstance(data["access_token"], str)
+    assert data["token_type"] == "bearer"
     assert "password" not in data
     assert "password_hash" not in data
+    
+    # Verify the returned token is a valid JWT
+    payload = verify_token(data["access_token"])
+    assert payload["sub"] == "1"
+    assert "exp" in payload
     
     app.dependency_overrides.clear()
 
