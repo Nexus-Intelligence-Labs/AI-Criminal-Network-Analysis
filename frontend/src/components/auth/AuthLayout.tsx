@@ -1,6 +1,6 @@
 import { Moon, ShieldCheck, Sun } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Button } from '../ui/Button'
+import { Button } from '../ui/button'
 import { useTheme } from '../../context/useTheme'
 
 export function AuthLayout({ children, title, description, eyebrow = 'Secure investigator access' }: { children: ReactNode; title: string; description?: string; eyebrow?: string }) {
