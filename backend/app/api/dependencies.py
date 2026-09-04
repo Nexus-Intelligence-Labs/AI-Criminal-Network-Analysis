@@ -27,13 +27,19 @@ The authorization dependencies build on :func:`get_current_user`, so they
 enforce 401 when the caller is not authenticated and 403 when an
 authenticated user lacks the required role.  Role decisions never come from
 request body / query / path input.
+
+Stage 8 — audit logging:
+
+Authentication failures and authorization denials are recorded through the
+audit service.  The client always receives a generic safe response; the
+audit record carries a safe internal reason category.
 """
 
 from __future__ import annotations
 
 from typing import Callable
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -41,6 +47,11 @@ from sqlalchemy.orm import Session
 from app.core.security import InvalidTokenError, verify_token
 from app.db.session import get_db_session
 from app.models.user import User
+from app.services.audit_service import (
+    AUTH_FAILURE,
+    AUTHORIZATION_DENIED,
+    log_event,
+)
 
 # auto_error=False so a missing/invalid Authorization header is handled by
 # this module and always returned as 401 (never FastAPI's default 403).
@@ -65,6 +76,16 @@ def _authentication_error() -> HTTPException:
     )
 
 
+def _audit_auth_failure(db: Session, reason: str) -> None:
+    """Record an authentication failure audit event with a safe reason."""
+    log_event(
+        db,
+        AUTH_FAILURE,
+        actor=None,
+        details={"reason": reason},
+    )
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
     db: Session = Depends(get_db_session),
@@ -80,19 +101,23 @@ def get_current_user(
             longer exists.
     """
     if credentials is None:
+        _audit_auth_failure(db, "missing_credentials")
         raise _authentication_error()
 
     token = credentials.credentials.strip()
     if not token:
+        _audit_auth_failure(db, "missing_credentials")
         raise _authentication_error()
 
     try:
         payload = verify_token(token)
-    except InvalidTokenError:
+    except InvalidTokenError as exc:
+        _audit_auth_failure(db, exc.reason)
         raise _authentication_error()
 
     sub = payload.get("sub")
     if not isinstance(sub, str) or not sub.isdigit():
+        _audit_auth_failure(db, "invalid_subject")
         raise _authentication_error()
 
     user_id = int(sub)
@@ -102,6 +127,7 @@ def get_current_user(
     if user is None:
         # A valid JWT pointing at a deleted user is an authentication failure,
         # not a 404 — and it must not reveal whether the user used to exist.
+        _audit_auth_failure(db, "user_not_found")
         raise _authentication_error()
 
     return user
@@ -160,9 +186,22 @@ def require_roles(*allowed_roles: str) -> Callable[..., User]:
     """
 
     def role_guard(
+        request: Request,
         current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db_session),
     ) -> User:
         if get_user_role(current_user) not in allowed_roles:
+            log_event(
+                db,
+                AUTHORIZATION_DENIED,
+                actor=str(current_user.id),
+                details={
+                    "path": request.url.path,
+                    "method": request.method,
+                    "required_roles": list(allowed_roles),
+                    "user_role": get_user_role(current_user),
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

@@ -61,8 +61,16 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 class InvalidTokenError(Exception):
-    """Raised when a JWT is invalid, expired, malformed, or missing required claims."""
-    pass
+    """Raised when a JWT is invalid, expired, malformed, or missing required claims.
+
+    Attributes:
+        reason: A safe, high-level category describing the failure.  Used for
+            audit logging; never exposed to clients.
+    """
+
+    def __init__(self, message: str, reason: str = "invalid_token") -> None:
+        super().__init__(message)
+        self.reason = reason
 
 
 def create_access_token(subject: str | int, expires_delta: timedelta | None = None) -> str:
@@ -105,9 +113,9 @@ def verify_token(token: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         if "sub" not in payload:
-            raise InvalidTokenError("Token missing 'sub' claim")
+            raise InvalidTokenError("Token missing 'sub' claim", reason="invalid_subject")
         return payload
     except jwt.ExpiredSignatureError:
-        raise InvalidTokenError("Token has expired")
+        raise InvalidTokenError("Token has expired", reason="expired_token")
     except jwt.InvalidTokenError:
-        raise InvalidTokenError("Invalid token")
+        raise InvalidTokenError("Invalid token", reason="invalid_token")
