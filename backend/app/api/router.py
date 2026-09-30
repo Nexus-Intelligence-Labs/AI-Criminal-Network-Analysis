@@ -9,6 +9,7 @@ from app.api.routes import (
     evidence,
     graph,
     health,
+    ingestion,
     relationships,
     search,
     timelines,
@@ -26,5 +27,5 @@ api_router.include_router(cases.router, prefix="/api/cases", tags=["cases"])
 api_router.include_router(timelines.router, prefix="/api/timelines", tags=["timelines"])
 api_router.include_router(evidence.router, prefix="/api/evidence", tags=["evidence"])
 api_router.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
-
+api_router.include_router(ingestion.router, prefix="/api/ingestion", tags=["ingestion"])
 

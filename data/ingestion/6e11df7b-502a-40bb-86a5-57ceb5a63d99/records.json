@@ -1,0 +1,34 @@
+{
+  "job_id": "6e11df7b-502a-40bb-86a5-57ceb5a63d99",
+  "status": "completed",
+  "request": {
+    "filename": "test-cdr.csv",
+    "content": "caller,receiver,timestamp,duration\n9876543210,9123456789,2026-01-01,30\n",
+    "case_id": "001",
+    "source_type": "cdr"
+  },
+  "records_received": 1,
+  "records_parsed": 1,
+  "records_rejected": 0,
+  "rows": [
+    {
+      "caller": "9876543210",
+      "receiver": "9123456789",
+      "timestamp": "2026-01-01",
+      "duration": "30"
+    }
+  ],
+  "graph": {
+    "entities_extracted": 2,
+    "relationships_extracted": 1,
+    "entities_written": 2,
+    "relationships_written": 1
+  },
+  "provenance": {
+    "source_filename": "test-cdr.csv",
+    "source_type": "cdr",
+    "case_id": "001",
+    "record_count": 1,
+    "previewed_at": "2026-09-05T01:26:55.894172+00:00"
+  }
+}

@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Network, Users, FolderOpen, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 const entityData = [
   { type: 'Person', count: 5 },
@@ -34,6 +36,7 @@ const caseActivityData = [
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ec4899']
 
 export function Analytics() {
+  const [scope, setScope] = useState<'network' | 'centrality' | 'communities' | 'activity'>('network')
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="border-b bg-card px-6 py-4">
@@ -45,6 +48,19 @@ export function Analytics() {
 
       <div className="flex-1 p-6 overflow-auto">
         <div className="grid gap-6">
+          <div className="flex flex-wrap gap-2">
+            {(['network', 'centrality', 'communities', 'activity'] as const).map((item) => (
+              <Button key={item} size="sm" variant={scope === item ? 'default' : 'outline'} onClick={() => setScope(item)}>
+                {item === 'network' ? 'Network overview' : item === 'centrality' ? 'Centrality' : item === 'communities' ? 'Communities' : 'Activity over time'}
+              </Button>
+            ))}
+          </div>
+          <Card className="border-cyan-400/20 bg-cyan-400/[0.03]">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
+              <div><p className="text-sm font-medium">Analysis scope: <span className="text-cyan-400">{scope}</span></p><p className="text-xs text-muted-foreground">All metrics are calculated from the local demo dataset.</p></div>
+              <select className="input h-9 w-40" aria-label="Analytics case scope"><option>All active cases</option><option>CASE-2026-001</option><option>CASE-2026-002</option></select>
+            </CardContent>
+          </Card>
           {/* Network Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>

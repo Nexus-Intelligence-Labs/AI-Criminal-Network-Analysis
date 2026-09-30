@@ -24,11 +24,32 @@ class GraphQueryService:
         Return the complete graph for a case.
         """
 
-        query = self.load_query("get_case_graph.cypher")
+        query = """
+        MATCH (source:Entity {case_id: $case_id})
+        OPTIONAL MATCH (source)-[relationship:RELATED]->(target:Entity {case_id: $case_id})
+        RETURN collect(DISTINCT {
+            id: source.entity_id,
+            type: toLower(source.entity_type),
+            label: source.name,
+            case_id: source.case_id,
+            source_record: source.source_record
+        }) AS nodes,
+        collect(DISTINCT CASE WHEN relationship IS NULL THEN NULL ELSE {
+            id: relationship.relationship_id,
+            source: source.entity_id,
+            target: target.entity_id,
+            type: relationship.relationship,
+            source_record: relationship.source_record
+        } END) AS edges
+        """
 
         with self.driver.session() as session:
-            result = session.run(query, case_id=case_id)
-            return [record.data() for record in result]
+            result = session.run(query, case_id=case_id).single()
+            data = result.data()
+            return {
+                "nodes": data["nodes"],
+                "edges": [edge for edge in data["edges"] if edge is not None],
+            }
 
     def get_neighbors(self, entity_id: str):
         """

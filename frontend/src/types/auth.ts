@@ -9,6 +9,7 @@ export interface AuthUser {
 export interface AuthSession {
   user: AuthUser
   issuedAt: string
+  accessToken?: string
 }
 
 export interface LoginInput {

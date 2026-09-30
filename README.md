@@ -53,10 +53,10 @@ and expose investigation-oriented views.
 | PostgreSQL | SQLAlchemy models and connection factory; no migration system |
 | Neo4j | Driver, writers, loaders, queries, and graph service code; schema/integration is incomplete |
 | AI/NLP | Working modules for extraction, resolution, structured processors, and pipeline orchestration |
-| Graph analytics | Early degree/PageRank/Louvain code; graph analytics modules currently have syntax errors |
-| Frontend | React/Vite investigator UI using local mock data |
-| Frontend authentication | Development-only mock session; not connected to backend JWT login |
-| End-to-end integration | Not complete |
+| Graph analytics | Early degree/PageRank/Louvain code; runtime Neo4j/GDS validation remains incomplete |
+| Frontend | React/Vite investigator UI using local mock/demo workflows plus protected ingestion screens |
+| Frontend authentication | Mock by default; optional API mode connects login to backend JWT |
+| End-to-end integration | Partially integrated for authenticated structured ingestion and provenance artifacts |
 | Production readiness | Not claimed |
 
 ## System Architecture
@@ -106,8 +106,9 @@ integration work.
 └── docker-compose.yml  PostgreSQL and Neo4j development services
 ```
 
-The source-category directories under `data/` and the subdirectories under
-`scripts/` currently contain placeholders rather than a complete ingestion
+The source-category directories under `data/` remain placeholders. The
+`scripts/seed/` directory includes a safe local development-user seed command,
+but the repository still does not provide a complete production ingestion
 deployment.
 
 ## Technology Stack
@@ -206,10 +207,11 @@ The application entry point is `backend/app/main.py` and registers
 | `GET /api/timelines/` | Protected placeholder |
 | `GET /api/evidence/` | Protected placeholder |
 | `GET /api/analytics/` | Protected placeholder |
+| `POST /api/ingestion/preview` | Protected structured-source validation and preview |
+| `POST /api/ingestion/import` | Protected validated source artifact import |
+| `GET /api/ingestion/{job_id}` | Protected ingestion artifact/status lookup |
 
-Most domain route handlers currently return a not-implemented response. The
-graph route ordering should also be reviewed so the literal `shortest-path`
-route cannot be captured by `/{case_id}`.
+Most domain route handlers currently return a not-implemented response.
 
 `backend/realtime_api.py` is a separate, unregistered FastAPI application for
 CDR, financial, and FIR ingestion. It initializes a global AI pipeline and is
@@ -243,10 +245,13 @@ API and should not be exposed without additional hardening.
 
 ### Authentication architecture
 
-The frontend and backend authentication flows are currently separate:
+The frontend defaults to a local mock session for development. Set
+`VITE_AUTH_MODE=api` to use the FastAPI JWT login and bearer-protected ingestion
+API. The API mode is intentionally opt-in until a deployment supplies a
+configured backend and seeded user.
 
 ```text
-Frontend /login
+Frontend /login (VITE_AUTH_MODE=mock)
     |
     v
 mockAuthService
@@ -255,11 +260,11 @@ mockAuthService
 localStorage or sessionStorage session
     |
     v
-RequireAuth protects dashboard routes
+RequireAuth protects dashboard and ingestion routes
 ```
 
 ```text
-POST /api/auth/login
+Frontend /login (VITE_AUTH_MODE=api)
     |
     v
 FastAPI auth route
@@ -388,6 +393,7 @@ charts.
 - `/reviews`
 - `/saved-queries`
 - `/alert-rules`
+- `/ingestion`
 
 Unknown paths redirect to `/dashboard`. The frontend has no matching
 `/cases/:caseId` route even though an entity-detail navigation path refers to
@@ -397,7 +403,7 @@ case detail; that route should be added or the navigation corrected.
 
 | Workflow | Current implementation |
 | --- | --- |
-| Login and session gate | Local mock session and protected routing |
+| Login and session gate | Mock by default; API mode supports backend JWT login and protected routing |
 | Dashboard | Local graph metrics, risk/activity panels, and quick actions |
 | Cases/entities/evidence/timeline/alerts | UI pages backed by local mock datasets |
 | Graph | Cytoscape graph, filters, layouts, search, hop-depth control, and demo explanations |
@@ -407,6 +413,7 @@ case detail; that route should be added or the navigation corrected.
 | Alert rules | Local rule-builder state |
 | Analytics | Local charts and selectable demo analysis scopes |
 | Settings | Frontend settings UI |
+| Ingestion | API-backed CSV/JSON/TXT preview, validation, provenance, and artifact import when API mode is configured |
 
 These workflows are useful interaction prototypes, not backend-connected
 investigation records.
@@ -466,8 +473,14 @@ decision.
 ```bash
 git clone <repository-url>
 cd AI-Criminal-Network-Analysis
-cp .env.example .env
+cp .env.host.example .env
 ```
+
+The checked-in `.env.example` and `.env.host.example` are host-backend
+templates: they use `127.0.0.1`, the published Docker ports, and backend port
+`8010`. Do not replace `.env` with `.env.docker.example` when running Python
+directly on the host. That file is only for a backend process inside the
+Compose network, where `postgres` and `neo4j` are resolvable service names.
 
 Replace development placeholder secrets before using shared or production
 environments. In particular, `JWT_SECRET` must be at least 32 UTF-8 bytes and
@@ -490,23 +503,34 @@ Services and ports:
 - Neo4j browser/HTTP: 7474.
 
 The compose file uses named volumes for PostgreSQL and Neo4j data. The
-application does not currently run migrations automatically.
+application does not currently run migrations automatically. For a host-run
+backend, use `.env.host.example` so `POSTGRES_HOST=127.0.0.1` and
+`NEO4J_URI=bolt://127.0.0.1:7687`. For a future backend container on the
+Compose network, use `.env.docker.example` so the service names
+`postgres` and `neo4j` resolve correctly.
 
 ## Running the Backend
 
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+docker compose up -d postgres neo4j
+backend/.venv/bin/python scripts/seed/seed_dev_user.py
+PYTHONPATH=backend backend/.venv/bin/python -m uvicorn app.main:app \
+  --host 127.0.0.1 --port 8010 --reload
 ```
 
-On Windows, activate with the shell-specific command for the created virtual
-environment. The API provides:
+The seed command creates missing development tables with SQLAlchemy metadata,
+prompts for a username and password, hashes the password with Argon2, and
+never overwrites or deletes an existing user. It is intentionally a local
+setup command, not a public registration endpoint. If dependencies are not
+installed yet, create `backend/.venv` and install
+`backend/requirements.txt` before running these commands.
 
-- `http://127.0.0.1:8000/health`
-- `http://127.0.0.1:8000/docs`
+The host backend must use `POSTGRES_HOST=127.0.0.1` and port `5432`; the
+Docker-only hostname `postgres` is not resolvable from a host Python process.
+The API provides:
+
+- `http://127.0.0.1:8010/health`
+- `http://127.0.0.1:8010/docs`
 
 The application requires `JWT_SECRET` during settings initialization. Database
 connections are created through the configured factories, but most domain
@@ -516,8 +540,10 @@ routes are not implemented yet.
 
 ```bash
 cd frontend
-npm install
-npm run dev
+VITE_API_BASE_URL=http://127.0.0.1:8010 \
+VITE_AUTH_MODE=api \
+VITE_GRAPH_MODE=api \
+npm run dev -- --host 127.0.0.1
 ```
 
 Other available scripts:
@@ -529,8 +555,22 @@ npm run build
 npm run preview
 ```
 
-The current frontend can be explored without a running backend because its
-authentication and dashboard data are local demo implementations.
+The `api` modes above make login and graph requests use the running backend.
+Without them, the frontend defaults to local mock authentication and demo data.
+
+### Minimal real ingestion check
+
+After logging in through the API-mode frontend, a CDR CSV can be uploaded from
+`/ingestion`. For a command-line check, create a synthetic file containing:
+
+```csv
+caller,receiver,timestamp,duration
+demo-caller,demo-receiver,2026-01-01T12:00:00Z,60
+```
+
+Use the returned JWT as a bearer token for the protected preview/import
+endpoints. The import response reports entity and relationship counts; the
+result can then be opened from `/graph?case=<case_id>`.
 
 ## Running the AI / NLP Code
 
@@ -577,8 +617,9 @@ tests are infrastructure- or API-dependent.
 
 The `graph/tests/` directory currently has no substantive test suite.
 Neo4j-dependent AI integration tests require running infrastructure and
-credentials. Graph compilation currently fails on the syntax defects described
-above.
+credentials. The repository now includes a focused backend integration test for
+the ingestion-to-Neo4j-to-graph-query path; it is skipped unless
+`NEO4J_PASSWORD` is configured.
 
 ### Frontend
 
@@ -605,7 +646,9 @@ Important environment variables are documented in `.env.example`:
 | `POSTGRES_*` | PostgreSQL connection and container configuration |
 | `NEO4J_*` | Neo4j connection and container configuration |
 | `BACKEND_*` | Backend bind host and port |
-| `VITE_API_BASE_URL` | Intended frontend API base URL; currently unused |
+| `VITE_API_BASE_URL` | Frontend API base URL |
+| `VITE_AUTH_MODE` | `mock` by default or `api` for backend JWT login |
+| `VITE_GRAPH_MODE` | `mock` by default or `api` for the real graph endpoint |
 | `JWT_SECRET` | Required backend signing secret |
 | `JWT_ALGORITHM` | Backend JWT algorithm, restricted to HS256 |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Backend access-token lifetime |
@@ -622,17 +665,17 @@ shared environments.
 | Backend API | 🟠 Partially integrated | FastAPI and route registration exist; most domain routes are placeholders |
 | PostgreSQL | 🟠 Partially integrated | Models/factory exist; no migrations or full persistence |
 | Neo4j | 🟠 Partially integrated | Driver/query/writer code exists; ontology and synchronization disagree |
-| Graph analytics | 🔴 Blocked | Current centrality/loader syntax errors; GDS lifecycle absent |
+| Graph analytics | 🟠 Partially integrated | Centrality/loader compile; GDS lifecycle and runtime validation remain absent |
 | AI/NLP | 🟠 Partially integrated | Multiple working modules; external models/services and provenance remain incomplete |
 | Entity resolution | 🟠 Partially integrated | Similarity and canonical IDs exist; no durable review/calibration workflow |
 | Security | ✅ Implemented foundation | Backend Argon2/JWT/bearer/audit hardening exists; broader controls remain |
 | Frontend | 🟡 Frontend/demo | React application and protected UI routes exist |
 | Dashboard | 🟡 Frontend/demo | Metrics and graph use local data |
 | Investigative workflows | 🟡 Frontend/demo | Interactive prototypes, not persisted investigations |
-| Backend ↔ frontend | 🔴 Not integrated | Frontend does not call API or attach JWTs |
+| Backend ↔ frontend | 🟠 Partial | API auth, ingestion, and graph clients exist; most domain pages remain mock |
 | AI ↔ frontend | 🔴 Not integrated | Review and assistant screens use local mocks |
-| Neo4j ↔ frontend | 🔴 Not integrated | Graph visualization uses frontend mock graph data |
-| End-to-end integration | 🔴 Planned | Requires API, persistence, graph, and AI wiring |
+| Neo4j ↔ frontend | 🟠 Partial | API graph mode renders Neo4j data; mock mode remains the default |
+| End-to-end integration | 🟠 Partial | CDR/financial ingestion writes canonical graph data; broader AI/NLP and persistence remain incomplete |
 | Testing | 🟠 Partial | Backend/AI suites exist; graph/frontend unit coverage is limited |
 | Deployment | 🔴 Development only | Compose is local infrastructure, not a production deployment |
 | Production readiness | 🔴 Not claimed | Security and integration gaps remain |
