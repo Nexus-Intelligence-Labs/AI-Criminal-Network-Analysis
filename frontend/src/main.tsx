@@ -22,6 +22,7 @@ import { Investigations } from './pages/Investigations'
 import { ReviewQueues } from './pages/ReviewQueues'
 import { SavedQueries } from './pages/SavedQueries'
 import { AlertRules } from './pages/AlertRules'
+import { Ingestion } from './pages/Ingestion'
 import './styles.css'
 import './dashboard.css'
 
@@ -54,6 +55,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/reviews" element={<ReviewQueues />} />
                 <Route path="/saved-queries" element={<SavedQueries />} />
                 <Route path="/alert-rules" element={<AlertRules />} />
+                <Route path="/ingestion" element={<Ingestion />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

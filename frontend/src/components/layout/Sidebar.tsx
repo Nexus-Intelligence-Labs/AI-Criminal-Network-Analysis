@@ -16,6 +16,7 @@ import {
   ScanSearch,
   Bookmark,
   BellRing,
+  Upload,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'AI Review', href: '/reviews', icon: ScanSearch, section: 'analysis' },
   { name: 'Saved Queries', href: '/saved-queries', icon: Bookmark, section: 'analysis' },
   { name: 'Alert Rules', href: '/alert-rules', icon: BellRing, section: 'analysis' },
+  { name: 'Ingestion', href: '/ingestion', icon: Upload, section: 'analysis' },
   { name: 'Settings', href: '/settings', icon: Settings, section: 'system' },
 ]
 

@@ -7,12 +7,12 @@ from app.services.graph_service import GraphService
 router = APIRouter()
 
 graph_service = GraphService()
-@router.get("/{case_id}")
-def get_graph(case_id: str, current_user: User = Depends(get_current_user)):
+@router.get("/shortest-path")
+def get_shortest_path(source: str, target: str, current_user: User = Depends(get_current_user)):
     """
-    Return the complete graph for an investigation.
+    Return the shortest path between two entities.
     """
-    return graph_service.get_case_graph(case_id)
+    return graph_service.get_shortest_path(source, target)
 
 
 @router.get("/neighbors/{entity_id}")
@@ -23,9 +23,9 @@ def get_neighbors(entity_id: str, current_user: User = Depends(get_current_user)
     return graph_service.get_neighbors(entity_id)
 
 
-@router.get("/shortest-path")
-def get_shortest_path(source: str, target: str, current_user: User = Depends(get_current_user)):
+@router.get("/{case_id}")
+def get_graph(case_id: str, current_user: User = Depends(get_current_user)):
     """
-    Return the shortest path between two entities.
+    Return the complete graph for an investigation.
     """
-    return graph_service.get_shortest_path(source, target)
+    return graph_service.get_case_graph(case_id)

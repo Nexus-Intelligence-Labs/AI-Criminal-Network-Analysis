@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { mockGraphData } from '@/mocks/graph'
 import { Entity, EntityType } from '@/types'
 import { useGraph } from '@/hooks/useGraph'
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConnectionExplanation } from '@/components/investigation/InvestigationPanels'
+import { fetchCaseGraph } from '@/services/graph'
 import { 
   ZoomIn, ZoomOut, Maximize2, RotateCcw, Filter, 
   Search as SearchIcon, Network as NetworkIcon, X,
@@ -44,19 +46,31 @@ export function GraphPage() {
   const [graphMode, setGraphMode] = useState('standard')
   const [timelineMonth, setTimelineMonth] = useState(3)
   const [connectionOpen, setConnectionOpen] = useState(false)
+  const [searchParams] = useSearchParams()
+  const [realGraph, setRealGraph] = useState<typeof mockGraphData | null>(null)
+  const [graphError, setGraphError] = useState('')
+  const apiGraphMode = import.meta.env.VITE_GRAPH_MODE === 'api'
+
+  useEffect(() => {
+    if (!apiGraphMode) return
+    void fetchCaseGraph(searchParams.get('case') || 'CASE-2026-001')
+      .then(setRealGraph)
+      .catch((error: unknown) => setGraphError(error instanceof Error ? error.message : 'The graph could not be loaded.'))
+  }, [apiGraphMode, searchParams])
 
   const handleNodeClick = (entity: Entity) => {
     setSelectedEntity(entity)
     setIsEntitySheetOpen(true)
   }
 
+  const sourceGraph = realGraph ?? mockGraphData
   const filteredData = {
-    nodes: mockGraphData.nodes.filter(node => 
+    nodes: sourceGraph.nodes.filter(node =>
       entityTypeFilters.length === 0 || entityTypeFilters.includes(node.type)
     ),
-    edges: mockGraphData.edges.filter(edge => {
-      const sourceNode = mockGraphData.nodes.find(n => n.id === edge.source)
-      const targetNode = mockGraphData.nodes.find(n => n.id === edge.target)
+    edges: sourceGraph.edges.filter(edge => {
+      const sourceNode = sourceGraph.nodes.find(n => n.id === edge.source)
+      const targetNode = sourceGraph.nodes.find(n => n.id === edge.target)
       return sourceNode && targetNode &&
         (relationshipFilters.length === 0 || relationshipFilters.includes(edge.type)) &&
         (entityTypeFilters.length === 0 || 
@@ -125,11 +139,14 @@ export function GraphPage() {
           <div>
             <h1 className="text-2xl font-bold">Network Graph</h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="font-mono">CASE-2026-001</Badge>
+              <Badge variant="outline" className="font-mono">{searchParams.get('case') || 'CASE-2026-001'}</Badge>
               <span className="text-sm text-muted-foreground">
                 Financial Network Investigation
               </span>
             </div>
+            {apiGraphMode && !realGraph && !graphError && <div className="px-6 py-2 text-sm text-muted-foreground">Loading graph data…</div>}
+            {graphError && <div className="px-6 py-2 text-sm text-destructive">{graphError}</div>}
+            {apiGraphMode && realGraph && realGraph.nodes.length === 0 && <div className="px-6 py-2 text-sm text-muted-foreground">No imported graph data exists for this case.</div>}
           </div>
           <div className="flex gap-2">
             <Select value={currentLayout} onValueChange={handleLayoutChange}>

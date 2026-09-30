@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { apiAuthService } from '../services/auth/apiAuthService'
 import { mockAuthService } from '../services/auth'
 import type { AuthService, AuthSession, AuthStatus, LoginInput } from '../types/auth'
 
@@ -11,9 +12,10 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+const defaultAuthService = import.meta.env.VITE_AUTH_MODE === 'api' ? apiAuthService : mockAuthService
 
-export function AuthProvider({ children, service = mockAuthService }: { children: ReactNode; service?: AuthService }) {
-  const [status, setStatus] = useState<AuthStatus>('unauthenticated')
+export function AuthProvider({ children, service = defaultAuthService }: { children: ReactNode; service?: AuthService }) {
+  const [status, setStatus] = useState<AuthStatus>('authenticating')
   const [session, setSession] = useState<AuthSession | null>(null)
 
   useEffect(() => {
